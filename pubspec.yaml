@@ -1,0 +1,37 @@
+name: dulce_hogar
+description: Dulce Hogar - Tienda de electrodomésticos
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.1.0
+  cached_network_image: ^3.4.1
+  flutter_svg: ^2.0.9
+  # ── Networking y storage ──────────────────
+  http: ^1.6.0
+  shared_preferences: ^2.5.4
+  # ── Abrir URLs (Stripe checkout) ──────────
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Regular.ttf
+        - asset: assets/fonts/Nunito-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Nunito-SemiBold.ttf
+          weight: 600
