@@ -3,8 +3,7 @@
 class ApiConfig {
   ApiConfig._();
 
-  /// Cambia esta URL por la de tu servidor en producción
-  static const String baseUrl = 'http://localhost:4000/api';
+  static const String baseUrl = 'https://broderick-peristomatic-nonalphabetically.ngrok-free.dev/api';
 
   // ── Auth
   static const String login            = '$baseUrl/login';
@@ -32,11 +31,7 @@ class ApiConfig {
   static const String favoritos        = '$baseUrl/favoritos';
   static String favoritoEliminar(int id) => '$baseUrl/favoritos/$id';
 
-  // ── Stripe
-  static const String stripeCheckout   = '$baseUrl/stripe/create-checkout-session';
-  static const String stripePedido     = '$baseUrl/stripe/pedido/confirmar';
-  static String stripeFactura(String sessionId) => '$baseUrl/stripe/factura/$sessionId';
-
-  // ── Direcciones (si las agregas como endpoint)
-  // static const String direcciones = '$baseUrl/direcciones';
+  // ── MercadoPago
+  static const String mpPreferencia    = '$baseUrl/mercadopago/create-preference';
+  static const String mpPedido         = '$baseUrl/mercadopago/pedido/confirmar';
 }

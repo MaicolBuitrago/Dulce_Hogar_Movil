@@ -5,6 +5,8 @@ import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
 import '../models/models.dart';
 import '../services/product_service.dart';
+import '../services/cart_service.dart';
+import '../services/favorites_service.dart';
 import '../utils/formatters.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -86,6 +88,28 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _addToCart(Producto p) async {
+    final r = await CartService.agregar(idproducto: p.idproducto, cantidad: 1);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(r.ok ? '${p.nombre} agregado al carrito' : (r.error ?? 'Error')),
+      backgroundColor: r.ok ? AppColors.success : AppColors.error,
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 2),
+    ));
+  }
+
+  Future<void> _toggleFavorite(Producto p) async {
+    final r = await FavoritesService.agregar(p.idproducto);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(r.ok ? '${p.nombre} guardado en favoritos' : (r.error ?? 'Error')),
+      backgroundColor: r.ok ? AppColors.success : AppColors.error,
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 2),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -125,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisCount: 2,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
-                            childAspectRatio: 0.68,
+                            childAspectRatio: 0.72,
                           ),
                           delegate: SliverChildBuilderDelegate(
                             (ctx, i) {
@@ -135,7 +159,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 price: p.precio,
                                 imageUrl: p.imagenPrincipal ?? '',
                                 onTap: () => _goToProductDetail(p),
-                                onAddToCart: () {},
+                                onAddToCart: () => _addToCart(p),
+                                onFavorite: () => _toggleFavorite(p),
                               );
                             },
                             childCount: _productos.length,

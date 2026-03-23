@@ -211,6 +211,7 @@ class ProductCard extends StatelessWidget {
   final bool isNew;
   final VoidCallback? onTap;
   final VoidCallback? onAddToCart;
+  final VoidCallback? onFavorite;
 
   const ProductCard({
     super.key,
@@ -222,6 +223,7 @@ class ProductCard extends StatelessWidget {
     this.isNew = false,
     this.onTap,
     this.onAddToCart,
+    this.onFavorite,
   });
 
   String _formatPrice(double p) {
@@ -251,26 +253,23 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Imagen + badges
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(AppDimensions.radiusM),
-                  ),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Image.network(
+            // Imagen — ocupa el espacio disponible, contenida y recortada
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppDimensions.radiusM),
+                ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
                       imageUrl,
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) => Container(
                         color: AppColors.surfaceVariant,
                         child: const Center(
-                          child: Icon(
-                            Icons.image_outlined,
-                            color: AppColors.textHint,
-                            size: 40,
-                          ),
+                          child: Icon(Icons.image_outlined,
+                              color: AppColors.textHint, size: 40),
                         ),
                       ),
                       loadingBuilder: (_, child, loading) {
@@ -290,59 +289,58 @@ class ProductCard extends StatelessWidget {
                         );
                       },
                     ),
-                  ),
-                ),
-                // Badge
-                if (badge != null || isNew)
-                  Positioned(
-                    top: AppDimensions.paddingS,
-                    left: AppDimensions.paddingS,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
+                    // Badge
+                    if (badge != null || isNew)
+                      Positioned(
+                        top: AppDimensions.paddingS,
+                        left: AppDimensions.paddingS,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isNew ? AppColors.secondary : AppColors.error,
+                            borderRadius:
+                                BorderRadius.circular(AppDimensions.radiusFull),
+                          ),
+                          child: Text(
+                            isNew ? 'Nuevo' : badge!,
+                            style: const TextStyle(
+                              fontFamily: AppTextStyles.fontFamily,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: isNew ? AppColors.secondary : AppColors.error,
-                        borderRadius:
-                            BorderRadius.circular(AppDimensions.radiusFull),
-                      ),
-                      child: Text(
-                        isNew ? 'Nuevo' : badge!,
-                        style: const TextStyle(
-                          fontFamily: AppTextStyles.fontFamily,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                    // Favorito
+                    Positioned(
+                      top: AppDimensions.paddingS,
+                      right: AppDimensions.paddingS,
+                      child: GestureDetector(
+                        onTap: onFavorite,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: AppColors.surface.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.favorite_border_rounded,
+                              size: 18, color: AppColors.error),
                         ),
                       ),
                     ),
-                  ),
-                // Favorito
-                Positioned(
-                  top: AppDimensions.paddingS,
-                  right: AppDimensions.paddingS,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface.withOpacity(0.9),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite_border_rounded,
-                      size: 18,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-            // Info
+            // Info — altura fija, nunca se desborda
             Padding(
-              padding: const EdgeInsets.all(AppDimensions.paddingS),
+              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     name,
@@ -363,9 +361,12 @@ class ProductCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        _formatPrice(price),
-                        style: AppTextStyles.priceStyle,
+                      Flexible(
+                        child: Text(
+                          _formatPrice(price),
+                          style: AppTextStyles.priceStyle,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       GestureDetector(
                         onTap: onAddToCart,

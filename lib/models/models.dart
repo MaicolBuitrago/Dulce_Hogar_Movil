@@ -218,7 +218,7 @@ class Pedido {
 }
 
 // ══════════════════════════════════════════════════════════════
-// PRODUCTO PARA STRIPE CHECKOUT
+// PRODUCTO PARA MERCADOPAGO CHECKOUT
 // ══════════════════════════════════════════════════════════════
 class ProductoCheckout {
   final int id;

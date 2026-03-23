@@ -10,6 +10,8 @@ import 'screens/product_detail_screen.dart';
 import 'screens/favorites_screen.dart';
 import 'screens/delivery_address_screen.dart';
 import 'screens/payment_screen.dart';
+import 'screens/payment_success_screen.dart';
+import 'screens/recuperar_contrasena_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,12 +33,19 @@ class DulceHogarApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Detectar si la URL actual es la pantalla de éxito de pago
+    final fullUrl = Uri.base.toString();
+    final isPaymentSuccess = fullUrl.contains('checkout') ||
+        fullUrl.contains('exitoso') ||
+        fullUrl.contains('payment_id') ||
+        fullUrl.contains('collection_id');
+
     return MaterialApp(
       title: 'Dulce Hogar',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      initialRoute: AppRoutes.login, // ← flujo real: empieza en login
-      routes: AppRoutes.routes,
+      initialRoute: isPaymentSuccess ? AppRoutes.paymentSuccess : AppRoutes.login,
+      onGenerateRoute: AppRoutes.onGenerateRoute,
     );
   }
 }
@@ -44,23 +53,53 @@ class DulceHogarApp extends StatelessWidget {
 class AppRoutes {
   AppRoutes._();
 
-  static const String login           = '/login';
-  static const String register        = '/register';
-  static const String home            = '/';
-  static const String cart            = '/cart';
-  static const String productDetail   = '/product-detail';
-  static const String favorites       = '/favorites';
-  static const String deliveryAddress = '/delivery-address';
-  static const String payment         = '/payment';
+  static const String login            = '/login';
+  static const String register         = '/register';
+  static const String home             = '/';
+  static const String cart             = '/cart';
+  static const String productDetail    = '/product-detail';
+  static const String favorites        = '/favorites';
+  static const String deliveryAddress  = '/delivery-address';
+  static const String payment          = '/payment';
+  static const String paymentSuccess   = '/checkout/forma-entrega/pago/exitoso';
+  static const String recuperarContrasena = '/recuperar-contrasena';
 
-  static final Map<String, WidgetBuilder> routes = {
-    login:           (_) => const LoginScreen(),
-    register:        (_) => const RegisterScreen(),
-    home:            (_) => const HomeScreen(),
-    cart:            (_) => const CartScreen(),
-    productDetail:   (_) => const ProductDetailScreen(),
-    favorites:       (_) => const FavoritesScreen(),
-    deliveryAddress: (_) => const DeliveryAddressScreen(),
-    payment:         (_) => const PaymentScreen(),
-  };
+  static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
+    final name = settings.name ?? '';
+    final uri = Uri.tryParse(name);
+
+    if (name.startsWith('/checkout')) {
+      final paymentId = uri?.queryParameters['payment_id'] ??
+          uri?.queryParameters['collection_id'];
+      return MaterialPageRoute(
+        settings: RouteSettings(
+          name: name,
+          arguments: paymentId != null
+              ? {'payment_id': paymentId}
+              : settings.arguments,
+        ),
+        builder: (_) => const PaymentSuccessScreen(),
+      );
+    }
+
+    final builders = <String, WidgetBuilder>{
+      login:               (_) => const LoginScreen(),
+      register:            (_) => const RegisterScreen(),
+      home:                (_) => const HomeScreen(),
+      cart:                (_) => const CartScreen(),
+      productDetail:       (_) => const ProductDetailScreen(),
+      favorites:           (_) => const FavoritesScreen(),
+      deliveryAddress:     (_) => const DeliveryAddressScreen(),
+      payment:             (_) => const PaymentScreen(),
+      paymentSuccess:      (_) => const PaymentSuccessScreen(),
+      recuperarContrasena: (_) => const RecuperarContrasenaScreen(),
+    };
+
+    final builder = builders[name];
+    if (builder != null) {
+      return MaterialPageRoute(settings: settings, builder: builder);
+    }
+
+    return null;
+  }
 }

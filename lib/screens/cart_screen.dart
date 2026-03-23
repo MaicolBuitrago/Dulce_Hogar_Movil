@@ -36,12 +36,36 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<void> _updateQty(int idproducto, int cantidad) async {
     setState(() => _processingId = true);
+
+    // Guardar las URLs de imagen actuales antes de actualizar
+    final imageCache = {
+      for (final item in _items)
+        if (item.imagenUrl != null) item.idproducto: item.imagenUrl!
+    };
+
     final r = await CartService.actualizar(idproducto: idproducto, cantidad: cantidad);
     if (!mounted) return;
+
     setState(() {
       _processingId = false;
-      if (r.ok) _items = r.data ?? [];
+      if (r.ok) {
+        // El backend no devuelve imagenUrl en el PUT — reinyectarla desde el cache
+        _items = (r.data ?? []).map((item) {
+          if (item.imagenUrl == null && imageCache.containsKey(item.idproducto)) {
+            return CarritoItem(
+              idproducto: item.idproducto,
+              nombre:     item.nombre,
+              precio:     item.precio,
+              cantidad:   item.cantidad,
+              subtotal:   item.subtotal,
+              imagenUrl:  imageCache[item.idproducto],
+            );
+          }
+          return item;
+        }).toList();
+      }
     });
+
     if (!r.ok) _showSnack(r.error ?? 'Error');
   }
 

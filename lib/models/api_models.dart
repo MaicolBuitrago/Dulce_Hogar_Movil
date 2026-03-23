@@ -372,7 +372,7 @@ class ApiResponse<T> {
   }
 }
 
-/// Payload para crear checkout con Stripe
+/// Payload para crear checkout con MercadoPago
 class CheckoutPayload {
   final String productName;
   final double price;

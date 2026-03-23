@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
-import '../services/stripe_service.dart';
+import '../services/mercadopago_service.dart';
 import '../utils/formatters.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -23,7 +23,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   double get _total => _productos.fold(0, (s, p) => s + p.precio * p.cantidad);
 
   final List<_PaymentMethod> _methods = [
-    _PaymentMethod(id: 0, title: 'Pagar con tarjeta (Stripe)', icon: Icons.credit_card_rounded, color: const Color(0xFF6772E5), available: true),
+    _PaymentMethod(id: 0, title: 'Pagar con MercadoPago', icon: Icons.credit_card_rounded, color: const Color(0xFF009EE3), available: true),
     _PaymentMethod(id: 1, title: 'Pagar con Nequi', subtitle: 'Próximamente', icon: Icons.phone_android_rounded, color: const Color(0xFF6B0F8C), available: false),
     _PaymentMethod(id: 2, title: 'Transferencia Bancolombia', subtitle: 'Próximamente', icon: Icons.account_balance_rounded, color: const Color(0xFFF5A623), available: false),
   ];
@@ -40,10 +40,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _pagar() async {
-    if (_selectedMethod != 0) return; // Solo Stripe activo
+    if (_selectedMethod != 0) return; // Solo MercadoPago activo
     setState(() => _loading = true);
 
-    final r = await StripeService.crearSesion(
+    final r = await MercadoPagoService.crearPreferencia(
       productos:   _productos,
       source:      _source,
       iddireccion: _iddireccion,

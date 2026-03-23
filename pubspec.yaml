@@ -9,14 +9,21 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
   google_fonts: ^6.1.0
   cached_network_image: ^3.4.1
   flutter_svg: ^2.0.9
-  # ── Networking y storage ──────────────────
+
+  # Networking y storage
   http: ^1.6.0
   shared_preferences: ^2.5.4
-  # ── Abrir URLs (Stripe checkout) ──────────
+
+  # Stripe checkout
   url_launcher: ^6.3.2
+
+  # Notificaciones
+  flutter_local_notifications: ^17.0.0
+  timezone: ^0.9.0
 
 dev_dependencies:
   flutter_test:
@@ -25,8 +32,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
   assets:
     - assets/images/
+
   fonts:
     - family: Nunito
       fonts:

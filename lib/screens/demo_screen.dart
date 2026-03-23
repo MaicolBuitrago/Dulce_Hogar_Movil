@@ -140,7 +140,7 @@ class DemoScreen extends StatelessWidget {
                     _DemoCard(
                       icon: Icons.payment_rounded,
                       title: 'Método de pago',
-                      subtitle: 'Stripe · Nequi · Bancolombia',
+                      subtitle: 'MercadoPago · Nequi · Bancolombia',
                       route: '/payment',
                     ),
                   ],

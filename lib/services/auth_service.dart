@@ -36,10 +36,9 @@ class AuthService {
     });
     if (!res.ok) return ServiceResult.error(res.error ?? 'Credenciales incorrectas');
 
-    // El backend usa cookies httpOnly. En Flutter guardamos el token
-    // si viene en el body; si no, el cliente maneja la sesión via cookie header.
-    final token = res.data['token'] as String?;
-    if (token != null) await ApiClient.saveToken(token);
+    // La cookie httpOnly ya fue capturada automáticamente por ApiClient.post()
+    // desde el header Set-Cookie de la respuesta del servidor.
+    // No se necesita hacer nada más aquí.
 
     final usuarioJson = res.data['usuario'] as Map<String, dynamic>?;
     if (usuarioJson == null) return ServiceResult.error('Respuesta inválida del servidor');
@@ -48,7 +47,8 @@ class AuthService {
 
   static Future<ServiceResult<void>> logout() async {
     await ApiClient.post('/logout', {});
-    await ApiClient.deleteToken();
+    // Borra la cookie de sesión del singleton
+    ApiClient.instance.limpiarSesion();
     return ServiceResult.ok(null);
   }
 

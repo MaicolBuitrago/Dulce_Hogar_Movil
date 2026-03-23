@@ -136,24 +136,19 @@ class _FavoriteCardState extends State<_FavoriteCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusM)),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: img != null
-                        ? CachedNetworkImage(imageUrl: img, fit: BoxFit.cover, errorWidget: (_, __, ___) => Container(color: AppColors.surfaceVariant, child: const Icon(Icons.image_outlined, color: AppColors.textHint, size: 40)))
+            // Imagen — ocupa todo el espacio disponible, sin overflow
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusM)),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    img != null
+                        ? CachedNetworkImage(imageUrl: img, fit: BoxFit.contain, errorWidget: (_, __, ___) => Container(color: AppColors.surfaceVariant, child: const Icon(Icons.image_outlined, color: AppColors.textHint, size: 40)))
                         : Container(color: AppColors.surfaceVariant, child: const Icon(Icons.image_outlined, color: AppColors.textHint, size: 40)),
-                  ),
-                ),
-                AnimatedOpacity(
-                  opacity: _showOverlay ? 1 : 0,
-                  duration: const Duration(milliseconds: 200),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusM)),
-                    child: AspectRatio(
-                      aspectRatio: 1,
+                    AnimatedOpacity(
+                      opacity: _showOverlay ? 1 : 0,
+                      duration: const Duration(milliseconds: 200),
                       child: Container(
                         color: Colors.black.withOpacity(0.55),
                         child: Center(
@@ -171,21 +166,23 @@ class _FavoriteCardState extends State<_FavoriteCard> {
                         ),
                       ),
                     ),
-                  ),
+                    Positioned(
+                      top: 6, right: 6,
+                      child: GestureDetector(
+                        onTap: widget.onRemove,
+                        child: Container(width: 28, height: 28, decoration: BoxDecoration(color: AppColors.surface.withOpacity(0.9), shape: BoxShape.circle), child: const Icon(Icons.favorite_rounded, size: 15, color: AppColors.error)),
+                      ),
+                    ),
+                  ],
                 ),
-                Positioned(
-                  top: 6, right: 6,
-                  child: GestureDetector(
-                    onTap: widget.onRemove,
-                    child: Container(width: 28, height: 28, decoration: BoxDecoration(color: AppColors.surface.withOpacity(0.9), shape: BoxShape.circle), child: const Icon(Icons.favorite_rounded, size: 15, color: AppColors.error)),
-                  ),
-                ),
-              ],
+              ),
             ),
+            // Info — tamaño fijo, nunca se desborda
             Padding(
-              padding: const EdgeInsets.all(AppDimensions.paddingS),
+              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(widget.fav.nombre, style: AppTextStyles.titleMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 4),

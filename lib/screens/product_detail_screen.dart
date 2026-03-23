@@ -26,7 +26,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _producto = ModalRoute.of(context)?.settings.arguments as Producto?;
+    final p = ModalRoute.of(context)?.settings.arguments as Producto?;
+    if (p != null && p.idproducto != _producto?.idproducto) {
+      _producto = p;
+      _checkFavorito();
+    }
+  }
+
+  Future<void> _checkFavorito() async {
+    if (_producto == null) return;
+    final r = await FavoritesService.getFavoritos();
+    if (!mounted) return;
+    if (r.ok && r.data != null) {
+      setState(() {
+        _isFavorite = r.data!.any((f) => f.idproducto == _producto!.idproducto);
+      });
+    }
   }
 
   @override
@@ -51,14 +66,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Future<void> _toggleFavorite() async {
     if (_producto == null) return;
     setState(() => _togglingFav = true);
-    final r = _isFavorite
-        ? await FavoritesService.eliminar(_producto!.idproducto)
-        : await FavoritesService.agregar(_producto!.idproducto);
+    final agregando = !_isFavorite;
+    final r = agregando
+        ? await FavoritesService.agregar(_producto!.idproducto)
+        : await FavoritesService.eliminar(_producto!.idproducto);
     if (!mounted) return;
     setState(() {
       _togglingFav = false;
-      if (r.ok) _isFavorite = !_isFavorite;
+      if (r.ok) _isFavorite = agregando;
     });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(r.ok
+          ? (agregando ? 'Guardado en favoritos' : 'Eliminado de favoritos')
+          : (r.error ?? 'Error')),
+      backgroundColor: r.ok ? AppColors.success : AppColors.error,
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 2),
+    ));
   }
 
   @override
