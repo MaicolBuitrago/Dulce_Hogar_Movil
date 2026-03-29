@@ -5,6 +5,7 @@ import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../services/favorites_service.dart';
 import '../utils/formatters.dart';
+import '../widgets/app_widgets.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -39,6 +40,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      bottomNavigationBar: const SharedBottomNav(),
       body: SafeArea(
         child: Column(
           children: [

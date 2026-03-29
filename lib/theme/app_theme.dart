@@ -1,47 +1,53 @@
 // lib/theme/app_theme.dart
 import 'package:flutter/material.dart';
 
-/// Paleta de colores basada en el logo de Dulce Hogar
-/// Tonos cálidos de verde salvia + crema/arena + acentos dorados
+/// Paleta de colores oficial Dulce Hogar
+/// Extraída del logo: verde brillante + azul acero + amarillo sol
 class AppColors {
   AppColors._();
 
-  // Colores primarios
-  static const Color primary = Color(0xFF5B8A6E);       // Verde salvia profundo
-  static const Color primaryLight = Color(0xFF7BAD8E);  // Verde salvia claro
-  static const Color primaryDark = Color(0xFF3D6B52);   // Verde salvia oscuro
+  // ── Verdes (color principal del logo) ──────────────────────────
+  static const Color primary      = Color(0xFF22C55E); // Verde brillante logo
+  static const Color primaryLight = Color(0xFF4ADE80); // Verde claro
+  static const Color primaryDark  = Color(0xFF16A34A); // Verde oscuro
+  static const Color primaryPale  = Color(0xFFF0FDF4); // Verde muy pálido (fondos)
+  static const Color primaryBorder= Color(0xFFBBF7D0); // Verde borde suave
 
-  // Colores secundarios
-  static const Color secondary = Color(0xFFE8C47A);     // Dorado cálido
-  static const Color secondaryLight = Color(0xFFF2D89A);
-  static const Color secondaryDark = Color(0xFFBF9A52);
+  // ── Azul (color letras DH del logo) ────────────────────────────
+  static const Color secondary     = Color(0xFF4A7FB5); // Azul acero logo
+  static const Color secondaryLight= Color(0xFFEFF6FF); // Azul muy claro
+  static const Color secondaryDark = Color(0xFF2C5F8A); // Azul oscuro
 
-  // Fondos
-  static const Color background = Color(0xFFF5F0E8);    // Crema suave
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFEEE8DC); // Crema oscura
+  // ── Amarillo (color del sol del logo) ──────────────────────────
+  static const Color accent        = Color(0xFFF5B732); // Amarillo sol
+  static const Color accentLight   = Color(0xFFFFFBEB); // Amarillo pálido
 
-  // Textos
-  static const Color textPrimary = Color(0xFF2C3E2D);   // Verde muy oscuro casi negro
-  static const Color textSecondary = Color(0xFF6B7C6E); // Verde grisáceo
-  static const Color textHint = Color(0xFFADB8A0);
+  // ── Fondos ─────────────────────────────────────────────────────
+  static const Color background    = Color(0xFFF8FAFC); // Gris muy claro
+  static const Color surface       = Color(0xFFFFFFFF); // Blanco puro
+  static const Color surfaceVariant= Color(0xFFF1F5F9); // Gris claro tarjetas
 
-  // Estado
-  static const Color success = Color(0xFF4CAF50);
-  static const Color error = Color(0xFFE57373);
-  static const Color warning = Color(0xFFFFB74D);
+  // ── Textos ─────────────────────────────────────────────────────
+  static const Color textPrimary   = Color(0xFF1E293B); // Casi negro
+  static const Color textSecondary = Color(0xFF475569); // Gris medio
+  static const Color textHint      = Color(0xFF94A3B8); // Gris claro
 
-  // Precio / Destaque
-  static const Color priceColor = Color(0xFF3D6B52);
-  static const Color discountBadge = Color(0xFFE57373);
+  // ── Estados ────────────────────────────────────────────────────
+  static const Color success       = Color(0xFF22C55E);
+  static const Color error         = Color(0xFFEF4444);
+  static const Color warning       = Color(0xFFF5B732);
 
-  // Bordes y divisores
-  static const Color border = Color(0xFFD4CABB);
-  static const Color divider = Color(0xFFE8E0D0);
+  // ── Precio / Destaque ──────────────────────────────────────────
+  static const Color priceColor    = Color(0xFF1E293B);
+  static const Color discountBadge = Color(0xFFEF4444);
 
-  // Bottom nav
-  static const Color navSelected = Color(0xFF5B8A6E);
-  static const Color navUnselected = Color(0xFFADB8A0);
+  // ── Bordes y divisores ─────────────────────────────────────────
+  static const Color border        = Color(0xFFE2E8F0);
+  static const Color divider       = Color(0xFFE2E8F0);
+
+  // ── Bottom nav ─────────────────────────────────────────────────
+  static const Color navSelected   = Color(0xFF16A34A);
+  static const Color navUnselected = Color(0xFF94A3B8);
 }
 
 class AppTextStyles {
@@ -193,7 +199,7 @@ class AppTheme {
         onSurface: AppColors.textPrimary,
         error: AppColors.error,
       ),
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: Colors.white,
       fontFamily: AppTextStyles.fontFamily,
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surface,

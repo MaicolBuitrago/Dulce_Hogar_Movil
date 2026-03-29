@@ -256,11 +256,26 @@ class _CartItemCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(AppDimensions.radiusS),
-            child: SizedBox(
+            child: Container(
               width: 80, height: 80,
+              color: AppColors.surfaceVariant,
               child: item.imagenUrl != null
-                  ? CachedNetworkImage(imageUrl: item.imagenUrl!, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Icons.image_outlined, color: AppColors.textHint))
-                  : Container(color: AppColors.surfaceVariant, child: const Icon(Icons.image_outlined, color: AppColors.textHint)),
+                  ? CachedNetworkImage(
+                      imageUrl: item.imagenUrl!,
+                      fit: BoxFit.contain,
+                      width: 80,
+                      height: 80,
+                      placeholder: (_, __) => const Center(
+                        child: SizedBox(
+                          width: 20, height: 20,
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary, strokeWidth: 2),
+                        ),
+                      ),
+                      errorWidget: (_, __, ___) => const Icon(
+                        Icons.image_outlined, color: AppColors.textHint),
+                    )
+                  : const Icon(Icons.image_outlined, color: AppColors.textHint),
             ),
           ),
           const SizedBox(width: AppDimensions.paddingM),

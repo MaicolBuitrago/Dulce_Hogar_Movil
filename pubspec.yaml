@@ -35,6 +35,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/logo_dulce_hogar.png
 
   fonts:
     - family: Nunito

@@ -1,4 +1,3 @@
-// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/app_theme.dart';
@@ -33,6 +32,16 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadCategorias();
     _loadProductos();
+    _syncCartCount();
+    _syncFavorites();
+  }
+
+  Future<void> _syncCartCount() async {
+    await CartService.getCarrito();
+  }
+
+  Future<void> _syncFavorites() async {
+    await FavoritesService.getFavoritos();
   }
 
   @override
@@ -84,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
     switch (i) {
       case 1: Navigator.of(context).pushNamed('/favorites'); break;
       case 2: Navigator.of(context).pushNamed('/cart'); break;
-      case 3: break; // perfil (futuro)
+      case 3: Navigator.of(context).pushNamed('/perfil'); break;
     }
   }
 
@@ -100,10 +109,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _toggleFavorite(Producto p) async {
-    final r = await FavoritesService.agregar(p.idproducto);
+    final wasFav = FavoritesService.favoriteIds.value.contains(p.idproducto);
+    final r = await FavoritesService.toggle(p.idproducto);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(r.ok ? '${p.nombre} guardado en favoritos' : (r.error ?? 'Error')),
+      content: Text(r.ok
+          ? (wasFav ? '${p.nombre} quitado de favoritos' : '${p.nombre} guardado en favoritos')
+          : (r.error ?? 'Error')),
       backgroundColor: r.ok ? AppColors.success : AppColors.error,
       behavior: SnackBarBehavior.floating,
       duration: const Duration(seconds: 2),
@@ -132,8 +144,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       sliver: SliverToBoxAdapter(
                         child: SectionHeader(
                           title: _selectedCatIndex == 0 ? 'Todos los productos' : (_categorias.isNotEmpty ? _categorias[_selectedCatIndex - 1].descripcion : ''),
-                          actionLabel: '',
-                          onAction: () {},
+                          actionLabel: _selectedCatIndex != 0 ? 'Ver todos' : '',
+                          onAction: _selectedCatIndex != 0 ? () {
+                            _onCategoryTap(0, null);
+                          } : () {},
                         ),
                       ),
                     ),
@@ -154,13 +168,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           delegate: SliverChildBuilderDelegate(
                             (ctx, i) {
                               final p = _productos[i];
-                              return ProductCard(
-                                name: p.nombre,
-                                price: p.precio,
-                                imageUrl: p.imagenPrincipal ?? '',
-                                onTap: () => _goToProductDetail(p),
-                                onAddToCart: () => _addToCart(p),
-                                onFavorite: () => _toggleFavorite(p),
+                              return ValueListenableBuilder<Set<int>>(
+                                valueListenable: FavoritesService.favoriteIds,
+                                builder: (context, favIds, _) => ProductCard(
+                                  name: p.nombre,
+                                  price: p.precio,
+                                  imageUrl: p.imagenPrincipal ?? '',
+                                  isFavorite: favIds.contains(p.idproducto),
+                                  stock: p.stock,
+                                  onTap: () => _goToProductDetail(p),
+                                  onAddToCart: () => _addToCart(p),
+                                  onFavorite: () => _toggleFavorite(p),
+                                ),
                               );
                             },
                             childCount: _productos.length,
@@ -175,9 +194,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: _selectedNavIndex,
-        onTap: _goToNav,
+      bottomNavigationBar: ValueListenableBuilder<int>(
+        valueListenable: CartService.cartCount,
+        builder: (context, count, _) => AppBottomNav(
+          currentIndex: _selectedNavIndex,
+          cartCount: count,
+          onTap: _goToNav,
+        ),
       ),
     );
   }
@@ -209,10 +232,30 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: AppDimensions.paddingS),
           GestureDetector(
             onTap: () => Navigator.of(context).pushNamed('/cart'),
-            child: Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(AppDimensions.radiusS)),
-              child: const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 22),
+            child: ValueListenableBuilder<int>(
+              valueListenable: CartService.cartCount,
+              builder: (context, count, _) => Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(AppDimensions.radiusS)),
+                    child: const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 22),
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      right: -4, top: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
+                        child: Text(
+                          count > 99 ? '99+' : '$count',
+                          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ],
@@ -265,8 +308,19 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: AppColors.secondary, borderRadius: BorderRadius.circular(AppDimensions.radiusFull)),
-                  child: const Text('Oferta especial', style: TextStyle(fontFamily: AppTextStyles.fontFamily, fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.22),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                    border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.local_offer_rounded, color: Colors.white, size: 11),
+                      SizedBox(width: 4),
+                      Text('Oferta especial', style: TextStyle(fontFamily: AppTextStyles.fontFamily, fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 8),
                 const Text('Hasta 30% OFF\nen electrodomésticos', style: TextStyle(fontFamily: AppTextStyles.fontFamily, fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white, height: 1.2)),

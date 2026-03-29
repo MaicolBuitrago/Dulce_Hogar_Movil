@@ -56,7 +56,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ─── Permisos Android 13+ ─────────────────────────────────────────────────
   Future<void> _checkAndRequestPermissions() async {
-    // defaultTargetPlatform funciona en web y nativo sin crashear
     if (kIsWeb) return;
     if (Theme.of(context).platform != TargetPlatform.android) return;
     bool mostrar = true;
@@ -160,9 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
   // ─── Validación de correo ─────────────────────────────────────────────────
-  // Acepta: texto@algo.com | texto@algo.co | texto@algo.com.co | etc.
   bool _esCorreoValido(String email) {
-    // Debe tener @ y dominio con extensión de 2+ letras
     final regex = RegExp(
       r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.(com|co|net|org|edu|gov|io|info|biz|[a-z]{2,})$',
       caseSensitive: false,
@@ -211,13 +208,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final email    = _emailController.text.trim();
     final password = _passwordController.text;
 
-    // Resetear errores visuales
     setState(() {
       _emailError    = false;
       _passwordError = false;
     });
 
-    // Validaciones con snackbars emergentes
     if (email.isEmpty && password.isEmpty) {
       setState(() { _emailError = true; _passwordError = true; });
       _snack('Completa tu correo y contraseña para continuar', error: true);
@@ -265,7 +260,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _loading = true);
 
-    // POST /api/login
     final result = await AuthService.login(email: email, contrasena: password);
 
     if (!mounted) return;
@@ -299,7 +293,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final screenH = MediaQuery.of(context).size.height;
-    // En pantallas pequeñas reducimos los espacios verticales
     final topPad  = screenH < 600 ? 20.0 : AppDimensions.paddingXXL;
     final midPad  = screenH < 600 ? 16.0 : AppDimensions.paddingXXL;
     final logoSz  = screenH < 600 ? 48.0 : 64.0;

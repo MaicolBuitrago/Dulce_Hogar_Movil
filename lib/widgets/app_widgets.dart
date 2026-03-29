@@ -1,6 +1,7 @@
 // lib/widgets/app_widgets.dart
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../services/cart_service.dart';
 
 // ──────────────────────────────────────────────────────────────
 // Logo Widget
@@ -20,28 +21,36 @@ class DulceHogarLogo extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // ── Imagen del logo desde assets ──────────────────────────
         Container(
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(size * 0.25),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(size * 0.22),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
-                blurRadius: 8,
+                color: const Color(0xFF22C55E).withOpacity(0.18),
+                blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: Center(
-            child: Text(
-              'DH',
-              style: TextStyle(
-                fontFamily: AppTextStyles.fontFamily,
-                fontSize: size * 0.38,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(size * 0.22),
+            child: Image.asset(
+              'assets/images/logo_dulce_hogar.png',
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Center(
+                child: Text(
+                  'DH',
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: size * 0.38,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF4A7FB5),
+                  ),
+                ),
               ),
             ),
           ),
@@ -53,23 +62,23 @@ class DulceHogarLogo extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Dulce',
+                'Dulce Hogar',
                 style: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
-                  fontSize: size * 0.35,
+                  fontSize: size * 0.32,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                  height: 1.1,
+                  color: const Color(0xFF4A7FB5),
+                  height: 1.2,
                 ),
               ),
               Text(
-                'Hogar',
+                'Tradición y Calidad',
                 style: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
-                  fontSize: size * 0.28,
+                  fontSize: size * 0.22,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textSecondary,
-                  height: 1.1,
+                  color: const Color(0xFF94A3B8),
+                  height: 1.2,
                 ),
               ),
             ],
@@ -209,6 +218,8 @@ class ProductCard extends StatelessWidget {
   final String imageUrl;
   final String? badge;
   final bool isNew;
+  final bool isFavorite;
+  final int stock;
   final VoidCallback? onTap;
   final VoidCallback? onAddToCart;
   final VoidCallback? onFavorite;
@@ -221,6 +232,8 @@ class ProductCard extends StatelessWidget {
     required this.imageUrl,
     this.badge,
     this.isNew = false,
+    this.isFavorite = false,
+    this.stock = 1,
     this.onTap,
     this.onAddToCart,
     this.onFavorite,
@@ -236,6 +249,7 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sinStock = stock <= 0;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -253,7 +267,6 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Imagen — ocupa el espacio disponible, contenida y recortada
             Expanded(
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(
@@ -262,35 +275,72 @@ class ProductCard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.network(
-                      imageUrl,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: AppColors.surfaceVariant,
-                        child: const Center(
-                          child: Icon(Icons.image_outlined,
-                              color: AppColors.textHint, size: 40),
-                        ),
-                      ),
-                      loadingBuilder: (_, child, loading) {
-                        if (loading == null) return child;
-                        return Container(
+                    ColorFiltered(
+                      colorFilter: sinStock
+                          ? const ColorFilter.matrix([
+                              0.2126, 0.7152, 0.0722, 0, 0,
+                              0.2126, 0.7152, 0.0722, 0, 0,
+                              0.2126, 0.7152, 0.0722, 0, 0,
+                              0,      0,      0,      1, 0,
+                            ])
+                          : const ColorFilter.mode(Colors.transparent, BlendMode.color),
+                      child: Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => Container(
                           color: AppColors.surfaceVariant,
+                          child: const Center(
+                            child: Icon(Icons.image_outlined,
+                                color: AppColors.textHint, size: 40),
+                          ),
+                        ),
+                        loadingBuilder: (_, child, loading) {
+                          if (loading == null) return child;
+                          return Container(
+                            color: AppColors.surfaceVariant,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: loading.expectedTotalBytes != null
+                                    ? loading.cumulativeBytesLoaded /
+                                        loading.expectedTotalBytes!
+                                    : null,
+                                color: AppColors.primary,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    // Overlay sin existencia
+                    if (sinStock)
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withOpacity(0.35),
                           child: Center(
-                            child: CircularProgressIndicator(
-                              value: loading.expectedTotalBytes != null
-                                  ? loading.cumulativeBytesLoaded /
-                                      loading.expectedTotalBytes!
-                                  : null,
-                              color: AppColors.primary,
-                              strokeWidth: 2,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.72),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.white.withOpacity(0.25)),
+                              ),
+                              child: const Text(
+                                'Sin existencia',
+                                style: TextStyle(
+                                  fontFamily: AppTextStyles.fontFamily,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
                             ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      ),
                     // Badge
-                    if (badge != null || isNew)
+                    if ((badge != null || isNew) && !sinStock)
                       Positioned(
                         top: AppDimensions.paddingS,
                         left: AppDimensions.paddingS,
@@ -323,11 +373,21 @@ class ProductCard extends StatelessWidget {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: AppColors.surface.withOpacity(0.9),
+                            color: isFavorite
+                                ? AppColors.error.withOpacity(0.12)
+                                : AppColors.surface.withOpacity(0.9),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.favorite_border_rounded,
-                              size: 18, color: AppColors.error),
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+                            child: Icon(
+                              isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                              key: ValueKey(isFavorite),
+                              size: 18,
+                              color: AppColors.error,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -335,7 +395,7 @@ class ProductCard extends StatelessWidget {
                 ),
               ),
             ),
-            // Info — altura fija, nunca se desborda
+            // Info
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
               child: Column(
@@ -344,7 +404,9 @@ class ProductCard extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: AppTextStyles.titleMedium,
+                    style: AppTextStyles.titleMedium.copyWith(
+                      color: sinStock ? AppColors.textHint : AppColors.textPrimary,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -364,23 +426,25 @@ class ProductCard extends StatelessWidget {
                       Flexible(
                         child: Text(
                           _formatPrice(price),
-                          style: AppTextStyles.priceStyle,
+                          style: AppTextStyles.priceStyle.copyWith(
+                            color: sinStock ? AppColors.textHint : AppColors.priceColor,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       GestureDetector(
-                        onTap: onAddToCart,
-                        child: Container(
+                        onTap: sinStock ? null : onAddToCart,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
                           width: 30,
                           height: 30,
                           decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.radiusS),
+                            color: sinStock ? AppColors.border : AppColors.primary,
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusS),
                           ),
-                          child: const Icon(
-                            Icons.add_rounded,
-                            color: Colors.white,
+                          child: Icon(
+                            sinStock ? Icons.remove_rounded : Icons.add_rounded,
+                            color: sinStock ? AppColors.textHint : Colors.white,
                             size: 18,
                           ),
                         ),
@@ -608,11 +672,13 @@ class DividerWithText extends StatelessWidget {
 // ──────────────────────────────────────────────────────────────
 class AppBottomNav extends StatelessWidget {
   final int currentIndex;
+  final int cartCount;
   final ValueChanged<int>? onTap;
 
   const AppBottomNav({
     super.key,
     required this.currentIndex,
+    this.cartCount = 0,
     this.onTap,
   });
 
@@ -642,8 +708,8 @@ class AppBottomNav extends StatelessWidget {
                 onTap: () => onTap?.call(0),
               ),
               _NavItem(
-                icon: Icons.grid_view_rounded,
-                label: 'Categorías',
+                icon: Icons.favorite_outline_rounded,
+                label: 'Favoritos',
                 isSelected: currentIndex == 1,
                 onTap: () => onTap?.call(1),
               ),
@@ -651,7 +717,7 @@ class AppBottomNav extends StatelessWidget {
                 icon: Icons.shopping_cart_rounded,
                 label: 'Carrito',
                 isSelected: currentIndex == 2,
-                badgeCount: 3,
+                badgeCount: cartCount,
                 onTap: () => onTap?.call(2),
               ),
               _NavItem(
@@ -751,6 +817,51 @@ class _NavItem extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+// ──────────────────────────────────────────────────────────────
+// SharedBottomNav — bottom nav listo para usar en cualquier pantalla
+// Detecta la ruta actual para marcar el tab correcto
+// ──────────────────────────────────────────────────────────────
+class SharedBottomNav extends StatelessWidget {
+  const SharedBottomNav({super.key});
+
+  int _indexForRoute(String route) {
+    if (route == '/') return 0;
+    if (route == '/favorites') return 1;
+    if (route == '/cart') return 2;
+    if (route == '/perfil') return 3;
+    return 0;
+  }
+
+  void _navigate(BuildContext context, int index) {
+    final routes = ['/', '/favorites', '/cart', '/perfil'];
+    final target = routes[index];
+    final current = ModalRoute.of(context)?.settings.name ?? '';
+
+    if (current == target) return; // ya estamos aquí
+
+    if (index == 0) {
+      // Inicio: limpiar el stack entero y volver al home
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
+    } else {
+      Navigator.of(context).pushNamed(target);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentRoute = ModalRoute.of(context)?.settings.name ?? '';
+    final currentIndex = _indexForRoute(currentRoute);
+
+    return ValueListenableBuilder<int>(
+      valueListenable: CartService.cartCount,
+      builder: (context, count, _) => AppBottomNav(
+        currentIndex: currentIndex,
+        cartCount: count,
+        onTap: (i) => _navigate(context, i),
       ),
     );
   }

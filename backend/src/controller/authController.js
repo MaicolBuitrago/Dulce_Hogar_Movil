@@ -54,11 +54,11 @@ export const enviarCorreoRecuperacion = async (req, res) => {
     sendSmtpEmail.subject = "Recuperación de contraseña - Dulce Hogar";
     sendSmtpEmail.htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
-        <h2 style="color: #5B8A6E;">Dulce Hogar — Recuperación de contraseña</h2>
+        <h2 style="color: #22C55E;">Dulce Hogar — Recuperación de contraseña</h2>
         <p>Hola, <strong>${user.nombre || "usuario"}</strong>.</p>
         <p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p>
         <a href="${resetUrl}"
-           style="display:inline-block; padding:12px 24px; background:#5B8A6E;
+           style="display:inline-block; padding:12px 24px; background:#22C55E;
                   color:white; text-decoration:none; border-radius:8px; margin:16px 0;">
           Restablecer contraseña
         </a>

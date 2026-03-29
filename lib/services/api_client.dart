@@ -163,12 +163,36 @@ class ApiClient {
   }
 
   String _extraerMensaje(dynamic body) {
+    String raw = '';
     if (body is Map) {
-      return body['message']?.toString() ??
+      raw = body['message']?.toString() ??
           body['error']?.toString() ??
           'Error desconocido';
+    } else {
+      raw = body.toString();
     }
-    return body.toString();
+
+    // Traducir errores técnicos de Postgres/servidor a mensajes amigables
+    final lower = raw.toLowerCase();
+    if (lower.contains('duplicate key') || lower.contains('unique constraint')) {
+      if (lower.contains('email')) return 'Este correo ya está registrado. ¿Ya tienes cuenta?';
+      if (lower.contains('cedula') || lower.contains('cédula')) return 'Esta cédula ya está registrada.';
+      return 'Este dato ya está registrado.';
+    }
+    if (lower.contains('foreign key') || lower.contains('violates')) {
+      return 'Error de datos. Verifica la información ingresada.';
+    }
+    if (lower.contains('not null') || lower.contains('null value')) {
+      return 'Faltan campos obligatorios.';
+    }
+    if (lower.contains('invalid input syntax')) {
+      return 'Formato de datos inválido.';
+    }
+    if (lower.contains('connection') || lower.contains('timeout')) {
+      return 'Sin conexión con el servidor. Intenta de nuevo.';
+    }
+
+    return raw;
   }
 }
 
