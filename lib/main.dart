@@ -1,4 +1,13 @@
 // lib/main.dart
+//
+// Cambios:
+//  • Llama a AuthService.checkSesionActiva() antes de arrancar
+//  • Si hay sesión activa → va directo al home (sin pasar por login)
+//  • Pasa navigatorKey a MaterialApp para que ApiClient pueda redirigir
+//    al login cuando el refresh token expira (sin contexto)
+//  • LoginScreen recibe argumento opcional 'mensaje' para mostrar snackbar
+//    de "sesión expirada"
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'theme/app_theme.dart';
@@ -14,24 +23,34 @@ import 'screens/payment_success_screen.dart';
 import 'screens/recuperar_contrasena_screen.dart';
 import 'screens/nueva_contrasena_screen.dart';
 import 'screens/perfil_screen.dart';
+import 'services/api_client.dart';
+import 'services/auth_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
+      statusBarColor:        Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ),
   );
-  runApp(const DulceHogarApp());
+
+  // ── Verificar sesión guardada ────────────────────────────────────────────
+  // Si hay token válido o refresh exitoso → irá al home
+  // Si no → irá al login normalmente
+  final sesionActiva = await AuthService.checkSesionActiva();
+
+  runApp(DulceHogarApp(sesionActiva: sesionActiva));
 }
 
 class DulceHogarApp extends StatefulWidget {
-  const DulceHogarApp({super.key});
+  final bool sesionActiva;
+  const DulceHogarApp({super.key, required this.sesionActiva});
 
   @override
   State<DulceHogarApp> createState() => _DulceHogarAppState();
@@ -64,30 +83,38 @@ class _DulceHogarAppState extends State<DulceHogarApp>
   Widget build(BuildContext context) {
     final fullUrl = Uri.base.toString();
     final isPaymentSuccess = fullUrl.contains('checkout') ||
-        fullUrl.contains('exitoso') ||
-        fullUrl.contains('payment_id') ||
+        fullUrl.contains('exitoso')     ||
+        fullUrl.contains('payment_id')  ||
         fullUrl.contains('collection_id');
 
-    final uri = Uri.parse(fullUrl);
+    final uri          = Uri.parse(fullUrl);
     final pathSegments = uri.pathSegments;
     final isResetPassword = pathSegments.isNotEmpty &&
         pathSegments.first == 'reset-password' &&
         pathSegments.length >= 2;
 
+    // Ruta inicial: si hay sesión activa, home; si no, login
+    final String initialRoute = isResetPassword
+        ? '${AppRoutes.resetPassword}/${pathSegments[1]}'
+        : isPaymentSuccess
+            ? AppRoutes.paymentSuccess
+            : widget.sesionActiva
+                ? AppRoutes.home
+                : AppRoutes.login;
+
     return MaterialApp(
-      title: 'Dulce Hogar',
+      title:                  'Dulce Hogar',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      initialRoute: isResetPassword
-          ? '${AppRoutes.resetPassword}/${pathSegments[1]}'
-          : isPaymentSuccess
-              ? AppRoutes.paymentSuccess
-              : AppRoutes.login,
-      onGenerateRoute: AppRoutes.onGenerateRoute,
+      theme:                  AppTheme.lightTheme,
+      // navigatorKey permite a ApiClient redirigir al login sin contexto
+      navigatorKey:           ApiClient.navigatorKey,
+      initialRoute:           initialRoute,
+      onGenerateRoute:        AppRoutes.onGenerateRoute,
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
 class AppRoutes {
   AppRoutes._();
 
@@ -106,14 +133,14 @@ class AppRoutes {
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     final name = settings.name ?? '';
-    final uri = Uri.tryParse(name);
+    final uri  = Uri.tryParse(name);
 
     if (name.startsWith('/checkout')) {
       final paymentId = uri?.queryParameters['payment_id'] ??
           uri?.queryParameters['collection_id'];
       return MaterialPageRoute(
         settings: RouteSettings(
-          name: name,
+          name:      name,
           arguments: paymentId != null
               ? {'payment_id': paymentId}
               : settings.arguments,
@@ -122,12 +149,11 @@ class AppRoutes {
       );
     }
 
-    // Deep link: /reset-password/<jwt-token>
     if (name.startsWith('/reset-password/')) {
       final token = name.replaceFirst('/reset-password/', '');
       return MaterialPageRoute(
         settings: settings,
-        builder: (_) => NuevaContrasenaScreen(token: token),
+        builder:  (_) => NuevaContrasenaScreen(token: token),
       );
     }
 

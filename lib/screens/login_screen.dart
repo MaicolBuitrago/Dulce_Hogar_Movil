@@ -24,7 +24,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailFocus         = FocusNode();
   final _passwordFocus      = FocusNode();
 
-  // Para resaltar campos con error
   bool _emailError    = false;
   bool _passwordError = false;
 
@@ -32,8 +31,19 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Muestra aviso de sesión expirada si viene de un redirect automático
+      _mostrarMensajeArgumento();
       _checkAndRequestPermissions();
     });
+  }
+
+  /// Si la pantalla fue abierta con arguments = {'mensaje': '...'} lo muestra.
+  void _mostrarMensajeArgumento() {
+    if (!mounted) return;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map && args['mensaje'] != null) {
+      _snack(args['mensaje'] as String, error: true);
+    }
   }
 
   @override
@@ -167,8 +177,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return regex.hasMatch(email.trim());
   }
 
-  // ─── SnackBar emergente ───────────────────────────────────────────────────
+  // ─── SnackBar ─────────────────────────────────────────────────────────────
   void _snack(String mensaje, {required bool error}) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -176,7 +187,9 @@ class _LoginScreenState extends State<LoginScreen> {
           content: Row(
             children: [
               Icon(
-                error ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
+                error
+                    ? Icons.error_outline_rounded
+                    : Icons.check_circle_outline_rounded,
                 color: Colors.white,
                 size: 20,
               ),
@@ -195,9 +208,9 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: error ? AppColors.error : AppColors.success,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 28),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14)),
-          duration: Duration(seconds: error ? 4 : 3),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          duration: Duration(seconds: error ? 4 : 2),
           elevation: 8,
         ),
       );
@@ -267,8 +280,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     result.when(
       onOk: (_) {
-        _snack('¡Bienvenido de nuevo! Iniciando sesión...', error: false);
-        Future.delayed(const Duration(milliseconds: 900), () {
+        _snack('¡Bienvenido de nuevo!', error: false);
+        Future.delayed(const Duration(milliseconds: 400), () {
           if (mounted) Navigator.of(context).pushReplacementNamed('/');
         });
       },
@@ -283,6 +296,10 @@ class _LoginScreenState extends State<LoginScreen> {
         } else if (err.toLowerCase().contains('bloqueado') ||
             err.toLowerCase().contains('inactivo')) {
           msg = 'Tu cuenta está suspendida. Contacta soporte';
+        } else if (err.toLowerCase().contains('intentos') ||
+            err.toLowerCase().contains('espera')) {
+          msg = err;
+          setState(() { _emailError = false; _passwordError = false; });
         }
         _snack(msg, error: true);
       },
@@ -315,6 +332,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   DulceHogarLogo(size: logoSz),
                   SizedBox(height: midPad),
 
+                  // ── Card principal ────────────────────────────────────
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(AppDimensions.paddingL),
@@ -344,13 +362,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         _label('Correo electrónico:'),
                         const SizedBox(height: 6),
                         TextField(
-                          controller: _emailController,
-                          focusNode: _emailFocus,
-                          keyboardType: TextInputType.emailAddress,
+                          controller:      _emailController,
+                          focusNode:       _emailFocus,
+                          keyboardType:    TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
-                          style: AppTextStyles.bodyMedium,
+                          style:           AppTextStyles.bodyMedium,
                           onChanged: (_) {
-                            if (_emailError) setState(() => _emailError = false);
+                            if (_emailError)
+                              setState(() => _emailError = false);
                           },
                           onSubmitted: (_) => _passwordFocus.requestFocus(),
                           decoration: InputDecoration(
@@ -389,11 +408,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         _label('Contraseña:'),
                         const SizedBox(height: 6),
                         TextField(
-                          controller: _passwordController,
-                          focusNode: _passwordFocus,
-                          obscureText: _obscurePassword,
+                          controller:      _passwordController,
+                          focusNode:       _passwordFocus,
+                          obscureText:     _obscurePassword,
                           textInputAction: TextInputAction.done,
-                          style: AppTextStyles.bodyMedium,
+                          style:           AppTextStyles.bodyMedium,
                           onChanged: (_) {
                             if (_passwordError)
                               setState(() => _passwordError = false);
@@ -440,7 +459,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
 
-                        // ── Aviso Caps Lock ─────────────────────────────
+                        // ── Caps Lock ───────────────────────────────────
                         AnimatedSize(
                           duration: const Duration(milliseconds: 200),
                           child: _capsLockOn
@@ -450,8 +469,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 12, vertical: 7),
                                     decoration: BoxDecoration(
-                                      color:
-                                          AppColors.warning.withOpacity(0.12),
+                                      color: AppColors.warning.withOpacity(0.12),
                                       borderRadius: BorderRadius.circular(
                                           AppDimensions.radiusM),
                                       border: Border.all(
@@ -521,7 +539,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                   ),
-                  SizedBox(height: screenH < 600 ? 16 : AppDimensions.paddingXXL),
+
+                  SizedBox(
+                      height: screenH < 600 ? 16 : AppDimensions.paddingXXL),
                 ],
               ),
             ),
@@ -531,10 +551,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // ─── Widgets auxiliares ───────────────────────────────────────────────────
   Widget _label(String text) => Text(
         text,
         style: AppTextStyles.bodyMedium.copyWith(
-            fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary),
       );
 
   Widget _linkRow(String prefix, String link, VoidCallback onTap) =>

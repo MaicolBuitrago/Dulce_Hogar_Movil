@@ -110,12 +110,40 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _toggleFavorite(Producto p) async {
     final wasFav = FavoritesService.favoriteIds.value.contains(p.idproducto);
-    final r = await FavoritesService.toggle(p.idproducto);
+
+    // Optimistic update — cambia el set ANTES de llamar la API
+    // Usamos agregar/eliminar directamente para no depender del toggle
+    // que lee favoriteIds internamente (ya modificado)
+    final updatedIds = Set<int>.from(FavoritesService.favoriteIds.value);
+    if (wasFav) {
+      updatedIds.remove(p.idproducto);
+    } else {
+      updatedIds.add(p.idproducto);
+    }
+    FavoritesService.favoriteIds.value = updatedIds;
+
+    // Llamar agregar o eliminar directamente (no toggle) para evitar
+    // que lea el set ya modificado y tome la decisión al revés
+    final r = wasFav
+        ? await FavoritesService.eliminar(p.idproducto)
+        : await FavoritesService.agregar(p.idproducto);
     if (!mounted) return;
+
+    if (!r.ok) {
+      // Revertir si falló
+      final revertIds = Set<int>.from(FavoritesService.favoriteIds.value);
+      if (wasFav) {
+        revertIds.add(p.idproducto);
+      } else {
+        revertIds.remove(p.idproducto);
+      }
+      FavoritesService.favoriteIds.value = revertIds;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(r.ok
-          ? (wasFav ? '${p.nombre} quitado de favoritos' : '${p.nombre} guardado en favoritos')
-          : (r.error ?? 'Error')),
+          ? (wasFav ? 'Quitado de favoritos' : 'Guardado en favoritos \u2764\ufe0f')
+          : (r.error ?? 'No se pudo actualizar favoritos')),
       backgroundColor: r.ok ? AppColors.success : AppColors.error,
       behavior: SnackBarBehavior.floating,
       duration: const Duration(seconds: 2),

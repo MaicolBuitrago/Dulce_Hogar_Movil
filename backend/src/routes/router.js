@@ -40,6 +40,9 @@ router.use("/direcciones",     direccionRoutes);
 
 // ── Pedidos (admin) ───────────────────────────────────────────
 router.use("/admin/pedidos",   pedidoRoutes);
-router.use("/estadisticas",    pedidoRoutes); // estadísticas comparten pedidoRoutes
+router.use("/estadisticas",    pedidoRoutes); 
+
+// ── Refresh token ─────────────────────────────────────────────
+router.post("/refresh", (req, res, next) => usuarioRoutes(req, res, next));
 
 export default router;
