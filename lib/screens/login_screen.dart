@@ -31,13 +31,11 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Muestra aviso de sesión expirada si viene de un redirect automático
       _mostrarMensajeArgumento();
       _checkAndRequestPermissions();
     });
   }
 
-  /// Si la pantalla fue abierta con arguments = {'mensaje': '...'} lo muestra.
   void _mostrarMensajeArgumento() {
     if (!mounted) return;
     final args = ModalRoute.of(context)?.settings.arguments;
@@ -55,7 +53,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // ─── Caps Lock ────────────────────────────────────────────────────────────
   void _onKey(KeyEvent event) {
     if (event is KeyDownEvent || event is KeyRepeatEvent) {
       final caps = HardwareKeyboard.instance.lockModesEnabled
@@ -64,7 +61,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // ─── Permisos Android 13+ ─────────────────────────────────────────────────
   Future<void> _checkAndRequestPermissions() async {
     if (kIsWeb) return;
     if (Theme.of(context).platform != TargetPlatform.android) return;
@@ -77,27 +73,30 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showPermisosDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusXL)),
-        backgroundColor: AppColors.surface,
+        backgroundColor: colorScheme.surface,
         title: Row(children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.12),
+              color: colorScheme.primary.withOpacity(0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.security_rounded,
-                color: AppColors.primary, size: 24),
+            child: Icon(Icons.security_rounded,
+                color: colorScheme.primary, size: 24),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
               child: Text('Permisos de la app',
-                  style: AppTextStyles.titleMedium)),
+                  style: textTheme.titleMedium)),
         ]),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -106,8 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Text(
               'Para brindarte la mejor experiencia, Dulce Hogar '
               'necesita los siguientes permisos:',
-              style: AppTextStyles.bodySmall
-                  .copyWith(color: AppColors.textSecondary),
+              style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 14),
             _permRow(Icons.notifications_outlined, 'Notificaciones',
@@ -124,8 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Ahora no',
-                style: AppTextStyles.bodySmall
-                    .copyWith(color: AppColors.textSecondary)),
+                style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -135,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
               } catch (_) {}
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: colorScheme.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.radiusM)),
@@ -147,28 +144,31 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _permRow(IconData icon, String titulo, String desc) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppColors.primary, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(titulo,
-                    style: AppTextStyles.bodySmall
-                        .copyWith(fontWeight: FontWeight.w700, fontSize: 13)),
-                Text(desc,
-                    style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary, fontSize: 11)),
-              ],
-            ),
+  Widget _permRow(IconData icon, String titulo, String desc) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: colorScheme.primary, size: 20),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(titulo,
+                  style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 13)),
+              Text(desc,
+                  style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant, fontSize: 11)),
+            ],
           ),
-        ],
-      );
+        ),
+      ],
+    );
+  }
 
-  // ─── Validación de correo ─────────────────────────────────────────────────
   bool _esCorreoValido(String email) {
     final regex = RegExp(
       r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.(com|co|net|org|edu|gov|io|info|biz|[a-z]{2,})$',
@@ -177,9 +177,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return regex.hasMatch(email.trim());
   }
 
-  // ─── SnackBar ─────────────────────────────────────────────────────────────
   void _snack(String mensaje, {required bool error}) {
     if (!mounted) return;
+    final colorScheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -205,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
-          backgroundColor: error ? AppColors.error : AppColors.success,
+          backgroundColor: error ? colorScheme.error : colorScheme.primary,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 28),
           shape:
@@ -216,7 +216,6 @@ class _LoginScreenState extends State<LoginScreen> {
       );
   }
 
-  // ─── Login ────────────────────────────────────────────────────────────────
   Future<void> _login() async {
     final email    = _emailController.text.trim();
     final password = _passwordController.text;
@@ -306,9 +305,10 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ─── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final screenH = MediaQuery.of(context).size.height;
     final topPad  = screenH < 600 ? 20.0 : AppDimensions.paddingXXL;
     final midPad  = screenH < 600 ? 16.0 : AppDimensions.paddingXXL;
@@ -318,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
       focusNode: FocusNode(),
       onKeyEvent: _onKey,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: colorScheme.background,
         body: SafeArea(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
@@ -332,17 +332,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   DulceHogarLogo(size: logoSz),
                   SizedBox(height: midPad),
 
-                  // ── Card principal ────────────────────────────────────
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(AppDimensions.paddingL),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: colorScheme.surface,
                       borderRadius:
                           BorderRadius.circular(AppDimensions.radiusXL),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: colorScheme.primary.withOpacity(0.1),
                           blurRadius: 24,
                           offset: const Offset(0, 8),
                         ),
@@ -351,22 +350,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Inicio de sesión',
-                            style: AppTextStyles.displayMedium),
+                        Text('Inicio de sesión',
+                            style: textTheme.displayMedium),
                         const SizedBox(height: 4),
-                        const Text('Bienvenido de nuevo',
-                            style: AppTextStyles.bodyMedium),
+                        Text('Bienvenido de nuevo',
+                            style: textTheme.bodyMedium),
                         const SizedBox(height: AppDimensions.paddingL),
 
-                        // ── Correo ──────────────────────────────────────
-                        _label('Correo electrónico:'),
+                        _label(context, 'Correo electrónico:'),
                         const SizedBox(height: 6),
                         TextField(
                           controller:      _emailController,
                           focusNode:       _emailFocus,
                           keyboardType:    TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
-                          style:           AppTextStyles.bodyMedium,
+                          style:           textTheme.bodyMedium,
                           onChanged: (_) {
                             if (_emailError)
                               setState(() => _emailError = false);
@@ -377,8 +375,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             prefixIcon: Icon(
                               Icons.email_outlined,
                               color: _emailError
-                                  ? AppColors.error
-                                  : AppColors.textHint,
+                                  ? colorScheme.error
+                                  : colorScheme.onSurfaceVariant,
                               size: AppDimensions.iconS,
                             ),
                             enabledBorder: OutlineInputBorder(
@@ -386,8 +384,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   AppDimensions.radiusM),
                               borderSide: BorderSide(
                                   color: _emailError
-                                      ? AppColors.error
-                                      : AppColors.border,
+                                      ? colorScheme.error
+                                      : colorScheme.outline,
                                   width: _emailError ? 1.5 : 1),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -395,8 +393,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   AppDimensions.radiusM),
                               borderSide: BorderSide(
                                   color: _emailError
-                                      ? AppColors.error
-                                      : AppColors.primary,
+                                      ? colorScheme.error
+                                      : colorScheme.primary,
                                   width: 2),
                             ),
                           ),
@@ -404,15 +402,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: AppDimensions.paddingM),
 
-                        // ── Contraseña ──────────────────────────────────
-                        _label('Contraseña:'),
+                        _label(context, 'Contraseña:'),
                         const SizedBox(height: 6),
                         TextField(
                           controller:      _passwordController,
                           focusNode:       _passwordFocus,
                           obscureText:     _obscurePassword,
                           textInputAction: TextInputAction.done,
-                          style:           AppTextStyles.bodyMedium,
+                          style:           textTheme.bodyMedium,
                           onChanged: (_) {
                             if (_passwordError)
                               setState(() => _passwordError = false);
@@ -423,8 +420,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             prefixIcon: Icon(
                               Icons.lock_outline_rounded,
                               color: _passwordError
-                                  ? AppColors.error
-                                  : AppColors.textHint,
+                                  ? colorScheme.error
+                                  : colorScheme.onSurfaceVariant,
                               size: AppDimensions.iconS,
                             ),
                             enabledBorder: OutlineInputBorder(
@@ -432,8 +429,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   AppDimensions.radiusM),
                               borderSide: BorderSide(
                                   color: _passwordError
-                                      ? AppColors.error
-                                      : AppColors.border,
+                                      ? colorScheme.error
+                                      : colorScheme.outline,
                                   width: _passwordError ? 1.5 : 1),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -441,8 +438,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   AppDimensions.radiusM),
                               borderSide: BorderSide(
                                   color: _passwordError
-                                      ? AppColors.error
-                                      : AppColors.primary,
+                                      ? colorScheme.error
+                                      : colorScheme.primary,
                                   width: 2),
                             ),
                             suffixIcon: GestureDetector(
@@ -452,14 +449,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 _obscurePassword
                                     ? Icons.visibility_off_outlined
                                     : Icons.visibility_outlined,
-                                color: AppColors.textHint,
+                                color: colorScheme.onSurfaceVariant,
                                 size: AppDimensions.iconS,
                               ),
                             ),
                           ),
                         ),
 
-                        // ── Caps Lock ───────────────────────────────────
                         AnimatedSize(
                           duration: const Duration(milliseconds: 200),
                           child: _capsLockOn
@@ -486,8 +482,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         const SizedBox(width: 6),
                                         Text(
                                           'Bloq Mayús activado',
-                                          style: AppTextStyles.bodySmall
-                                              .copyWith(
+                                          style: textTheme.bodySmall?.copyWith(
                                             color: AppColors.warning,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -501,7 +496,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: AppDimensions.paddingL),
 
-                        // ── Botón Ingresar ──────────────────────────────
                         ElevatedButton(
                           onPressed: _loading ? null : _login,
                           child: _loading
@@ -516,18 +510,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: AppDimensions.paddingM),
 
-                        // ── Links ────────────────────────────────────────
                         Center(
                           child: Column(
                             children: [
-                              _linkRow(
+                              _linkRow(context,
                                 '¿Olvidaste tu contraseña? ',
                                 'Recupérala aquí',
                                 () => Navigator.of(context)
                                     .pushNamed('/recuperar-contrasena'),
                               ),
                               const SizedBox(height: 6),
-                              _linkRow(
+                              _linkRow(context,
                                 '¿No tienes cuenta? ',
                                 'Regístrate',
                                 () => Navigator.of(context)
@@ -551,34 +544,42 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ─── Widgets auxiliares ───────────────────────────────────────────────────
-  Widget _label(String text) => Text(
-        text,
-        style: AppTextStyles.bodyMedium.copyWith(
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary),
-      );
+  Widget _label(BuildContext context, String text) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Text(
+      text,
+      style: textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: colorScheme.onSurface),
+    );
+  }
 
-  Widget _linkRow(String prefix, String link, VoidCallback onTap) =>
-      RichText(
-        text: TextSpan(
-          style: AppTextStyles.bodySmall,
-          children: [
-            TextSpan(text: prefix),
-            WidgetSpan(
-              child: GestureDetector(
-                onTap: onTap,
-                child: Text(
-                  link,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                    decoration: TextDecoration.underline,
-                  ),
+  Widget _linkRow(BuildContext context, String prefix, String link, VoidCallback onTap) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return RichText(
+      text: TextSpan(
+        style: textTheme.bodySmall,
+        children: [
+          TextSpan(text: prefix),
+          WidgetSpan(
+            child: GestureDetector(
+              onTap: onTap,
+              child: Text(
+                link,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                  decoration: TextDecoration.underline,
                 ),
               ),
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 }

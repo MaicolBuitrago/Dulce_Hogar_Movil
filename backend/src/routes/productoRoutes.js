@@ -8,11 +8,12 @@ import busboy from "busboy";
 const router = express.Router();
 
 // ─────────────────────────────────────────
-// GET /api/productos  →  Lista pública (con search opcional)
+// GET /api/productos  →  Lista pública
+// Soporta: search, precioMin, precioMax, idMarca, idCategoria, ordenar
 // ─────────────────────────────────────────
 router.get("/", async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, precioMin, precioMax, idMarca, idCategoria, ordenar } = req.query;
 
     let query = supabaseDB
       .from("producto")
@@ -21,11 +22,29 @@ router.get("/", async (req, res) => {
         idcategoria, idmarca, activo,
         producto_imagen ( idimagen, url )
       `)
-      .eq("activo", true)
-      .order("idproducto", { ascending: false });
+      .eq("activo", true);
 
+    // Filtro de texto
     if (search) {
       query = query.or(`nombre.ilike.%${search}%,descripcion.ilike.%${search}%`);
+    }
+
+    // Filtro por rango de precio
+    if (precioMin) query = query.gte("precio", Number(precioMin));
+    if (precioMax) query = query.lte("precio", Number(precioMax));
+
+    // Filtro por marca
+    if (idMarca) query = query.eq("idmarca", Number(idMarca));
+
+    // Filtro por categoría (además del endpoint /categorias/:id/productos)
+    if (idCategoria) query = query.eq("idcategoria", Number(idCategoria));
+
+    // Ordenamiento
+    switch (ordenar) {
+      case "precio_asc":  query = query.order("precio", { ascending: true });  break;
+      case "precio_desc": query = query.order("precio", { ascending: false }); break;
+      case "nombre_asc":  query = query.order("nombre", { ascending: true });  break;
+      default:            query = query.order("idproducto", { ascending: false });
     }
 
     const { data: productos, error } = await query;

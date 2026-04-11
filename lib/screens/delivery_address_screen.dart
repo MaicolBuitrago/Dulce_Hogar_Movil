@@ -97,8 +97,11 @@ class _DeliveryAddressScreenState extends State<DeliveryAddressScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -110,7 +113,7 @@ class _DeliveryAddressScreenState extends State<DeliveryAddressScreen> {
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.all(AppDimensions.paddingM),
-                  child: _showForm ? _buildForm() : _buildAddressList(),
+                  child: _showForm ? _buildForm(context) : _buildAddressList(context),
                 ),
               ),
           ],
@@ -119,133 +122,170 @@ class _DeliveryAddressScreenState extends State<DeliveryAddressScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) => Container(
-    color: AppColors.surface,
-    padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingS),
-    child: Row(
+  Widget _buildHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Container(
+      color: colorScheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingS),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: _showForm ? () => setState(() => _showForm = false) : () => Navigator.of(context).maybePop(),
+            child: Container(
+              width: 40, 
+              height: 40, 
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceVariant, 
+                borderRadius: BorderRadius.circular(AppDimensions.radiusM)
+              ), 
+              child: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface, size: 20)
+            ),
+          ),
+          const SizedBox(width: AppDimensions.paddingM),
+          Text(_showForm ? 'Nueva dirección' : 'Dirección de entrega', style: textTheme.headlineMedium),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddressList(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Column(
       children: [
-        GestureDetector(
-          onTap: _showForm ? () => setState(() => _showForm = false) : () => Navigator.of(context).maybePop(),
-          child: Container(width: 40, height: 40, decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(AppDimensions.radiusM)), child: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary, size: 20)),
-        ),
-        const SizedBox(width: AppDimensions.paddingM),
-        Text(_showForm ? 'Nueva dirección' : 'Dirección de entrega', style: AppTextStyles.headlineMedium),
-      ],
-    ),
-  );
+        // Lista de direcciones
+        Container(
+          padding: const EdgeInsets.all(AppDimensions.paddingM),
+          decoration: BoxDecoration(
+            color: colorScheme.surface, 
+            borderRadius: BorderRadius.circular(AppDimensions.radiusL), 
+            boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, 4))]
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Selecciona una dirección', style: textTheme.headlineMedium),
+              const SizedBox(height: AppDimensions.paddingM),
+              if (_addresses.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingM),
+                  child: Center(child: Text('No tienes direcciones guardadas', style: textTheme.bodyMedium)),
+                )
+              else
+                ..._addresses.map((addr) {
+                  final isSelected = _selectedId == addr.iddireccion;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedId = addr.iddireccion),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
+                      padding: const EdgeInsets.all(AppDimensions.paddingM),
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.primary.withOpacity(0.05) : colorScheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+                        border: Border.all(color: isSelected ? AppColors.primary : colorScheme.outline, width: isSelected ? 2 : 1),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 22, height: 22,
+                            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: isSelected ? AppColors.primary : colorScheme.outline, width: 2)),
+                            child: isSelected ? Center(child: Container(width: 10, height: 10, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.primary))) : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(child: Text(addr.direccion, style: textTheme.bodyMedium)),
+                          GestureDetector(
+                            onTap: () => _deleteAddress(addr.iddireccion),
+                            child: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
 
-  Widget _buildAddressList() => Column(
-    children: [
-      // Lista de direcciones
-      Container(
-        padding: const EdgeInsets.all(AppDimensions.paddingM),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppDimensions.radiusL), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, 4))]),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Selecciona una dirección', style: AppTextStyles.headlineMedium),
-            const SizedBox(height: AppDimensions.paddingM),
-            if (_addresses.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: AppDimensions.paddingM),
-                child: Center(child: Text('No tienes direcciones guardadas', style: AppTextStyles.bodyMedium)),
-              )
-            else
-              ..._addresses.map((addr) {
-                final isSelected = _selectedId == addr.iddireccion;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedId = addr.iddireccion),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
-                    padding: const EdgeInsets.all(AppDimensions.paddingM),
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary.withOpacity(0.05) : AppColors.surfaceVariant,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                      border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: isSelected ? 2 : 1),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 22, height: 22,
-                          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: 2)),
-                          child: isSelected ? Center(child: Container(width: 10, height: 10, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.primary))) : null,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(child: Text(addr.direccion, style: AppTextStyles.bodyMedium)),
-                        GestureDetector(
-                          onTap: () => _deleteAddress(addr.iddireccion),
-                          child: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
-                        ),
-                      ],
-                    ),
+              // Agregar nueva
+              GestureDetector(
+                onTap: () => setState(() => _showForm = true),
+                child: Container(
+                  padding: const EdgeInsets.all(AppDimensions.paddingM),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface, 
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusM), 
+                    border: Border.all(color: colorScheme.outline)
                   ),
-                );
-              }),
-
-            // Agregar nueva
-            GestureDetector(
-              onTap: () => setState(() => _showForm = true),
-              child: Container(
-                padding: const EdgeInsets.all(AppDimensions.paddingM),
-                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppDimensions.radiusM), border: Border.all(color: AppColors.border)),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.add_location_alt_outlined, color: AppColors.primary, size: 20),
-                    const SizedBox(width: 8),
-                    Text('Agregar nueva dirección', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
-                  ],
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.add_location_alt_outlined, color: AppColors.primary, size: 20),
+                      const SizedBox(width: 8),
+                      Text('Agregar nueva dirección', style: textTheme.bodyMedium?.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
                 ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: AppDimensions.paddingL),
+
+        ElevatedButton(
+          onPressed: _selectedId != null ? _continuar : null,
+          child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text('Continuar'), SizedBox(width: 8), Icon(Icons.arrow_forward_rounded, size: 18)]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildForm(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Nueva dirección de entrega', style: textTheme.headlineMedium),
+        const SizedBox(height: AppDimensions.paddingM),
+        Container(
+          padding: const EdgeInsets.all(AppDimensions.paddingL),
+          decoration: BoxDecoration(
+            color: colorScheme.surface, 
+            borderRadius: BorderRadius.circular(AppDimensions.radiusL)
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Dirección completa *', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _newAddressCtrl,
+                style: textTheme.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: 'Calle 10 #9-04, Caicedonia, Valle del Cauca', 
+                  prefixIcon: Icon(Icons.home_outlined, color: colorScheme.onSurfaceVariant, size: AppDimensions.iconS)
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppDimensions.paddingL),
+        Row(
+          children: [
+            Expanded(child: OutlinedButton(onPressed: () => setState(() => _showForm = false), child: const Text('Cancelar'))),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _savingAddress ? null : _saveAddress,
+                child: _savingAddress ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Guardar'),
               ),
             ),
           ],
         ),
-      ),
-
-      const SizedBox(height: AppDimensions.paddingL),
-
-      ElevatedButton(
-        onPressed: _selectedId != null ? _continuar : null,
-        child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text('Continuar'), SizedBox(width: 8), Icon(Icons.arrow_forward_rounded, size: 18)]),
-      ),
-    ],
-  );
-
-  Widget _buildForm() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text('Nueva dirección de entrega', style: AppTextStyles.headlineMedium),
-      const SizedBox(height: AppDimensions.paddingM),
-      Container(
-        padding: const EdgeInsets.all(AppDimensions.paddingL),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppDimensions.radiusL)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Dirección completa *', style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _newAddressCtrl,
-              style: AppTextStyles.bodyMedium,
-              decoration: const InputDecoration(hintText: 'Calle 10 #9-04, Caicedonia, Valle del Cauca', prefixIcon: Icon(Icons.home_outlined, color: AppColors.textHint, size: AppDimensions.iconS)),
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: AppDimensions.paddingL),
-      Row(
-        children: [
-          Expanded(child: OutlinedButton(onPressed: () => setState(() => _showForm = false), child: const Text('Cancelar'))),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: _savingAddress ? null : _saveAddress,
-              child: _savingAddress ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Guardar'),
-            ),
-          ),
-        ],
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }

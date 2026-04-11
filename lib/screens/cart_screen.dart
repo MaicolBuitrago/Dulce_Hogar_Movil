@@ -98,8 +98,11 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -107,7 +110,7 @@ class _CartScreenState extends State<CartScreen> {
             if (_loading)
               const Expanded(child: Center(child: CircularProgressIndicator(color: AppColors.primary)))
             else if (_items.isEmpty)
-              Expanded(child: _buildEmptyState())
+              Expanded(child: _buildEmptyState(context))
             else
               Expanded(
                 child: RefreshIndicator(
@@ -119,7 +122,7 @@ class _CartScreenState extends State<CartScreen> {
                       SliverToBoxAdapter(
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(AppDimensions.paddingM, AppDimensions.paddingM, AppDimensions.paddingM, 0),
-                          child: Text('${_items.length} artículo${_items.length != 1 ? 's' : ''}', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                          child: Text('${_items.length} artículo${_items.length != 1 ? 's' : ''}', style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
                         ),
                       ),
                       SliverPadding(
@@ -154,7 +157,7 @@ class _CartScreenState extends State<CartScreen> {
                               children: [
                                 const Icon(Icons.local_shipping_outlined, color: AppColors.primary, size: 20),
                                 const SizedBox(width: 10),
-                                Expanded(child: Text('Agrega ${Formatters.precio(1500000 - _subtotal)} más para envío gratis', style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryDark, fontWeight: FontWeight.w600))),
+                                Expanded(child: Text('Agrega ${Formatters.precio(1500000 - _subtotal)} más para envío gratis', style: textTheme.bodySmall?.copyWith(color: AppColors.primaryDark, fontWeight: FontWeight.w600))),
                               ],
                             ),
                           ),
@@ -171,71 +174,117 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildAppBar(BuildContext context) => Container(
-    color: AppColors.surface,
-    padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingS),
-    child: Row(
-      children: [
-        GestureDetector(
-          onTap: () => Navigator.of(context).maybePop(),
-          child: Container(width: 40, height: 40, decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(AppDimensions.radiusM)), child: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary, size: 20)),
-        ),
-        const SizedBox(width: AppDimensions.paddingM),
-        const Expanded(child: Text('Mi Carrito', style: AppTextStyles.headlineLarge)),
-        if (_items.isNotEmpty)
-          GestureDetector(onTap: _vaciar, child: Text('Vaciar', style: AppTextStyles.bodySmall.copyWith(color: AppColors.error, fontWeight: FontWeight.w600))),
-      ],
-    ),
-  );
+  Widget _buildAppBar(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      color: colorScheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingS),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).maybePop(),
+            child: Container(
+              width: 40, 
+              height: 40, 
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceVariant, 
+                borderRadius: BorderRadius.circular(AppDimensions.radiusM)
+              ), 
+              child: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface, size: 20)
+            ),
+          ),
+          const SizedBox(width: AppDimensions.paddingM),
+          Expanded(child: Text('Mi Carrito', style: textTheme.headlineLarge)),
+          if (_items.isNotEmpty)
+            GestureDetector(
+              onTap: _vaciar, 
+              child: Text('Vaciar', style: textTheme.bodySmall?.copyWith(color: AppColors.error, fontWeight: FontWeight.w600))
+            ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildEmptyState() => Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(width: 100, height: 100, decoration: const BoxDecoration(color: AppColors.surfaceVariant, shape: BoxShape.circle), child: const Icon(Icons.shopping_cart_outlined, size: 48, color: AppColors.textHint)),
-        const SizedBox(height: AppDimensions.paddingL),
-        const Text('Tu carrito está vacío', style: AppTextStyles.headlineMedium),
-        const SizedBox(height: 8),
-        const Text('Agrega productos para empezar', style: AppTextStyles.bodyMedium),
-        const SizedBox(height: AppDimensions.paddingL),
-        SizedBox(width: 200, child: ElevatedButton(onPressed: () => Navigator.of(context).pushReplacementNamed('/'), child: const Text('Ver productos'))),
-      ],
-    ),
-  );
+  Widget _buildEmptyState(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100, 
+            height: 100, 
+            decoration: BoxDecoration(color: colorScheme.surfaceVariant, shape: BoxShape.circle), 
+            child: Icon(Icons.shopping_cart_outlined, size: 48, color: colorScheme.onSurfaceVariant)
+          ),
+          const SizedBox(height: AppDimensions.paddingL),
+          Text('Tu carrito está vacío', style: textTheme.headlineMedium),
+          const SizedBox(height: 8),
+          Text('Agrega productos para empezar', style: textTheme.bodyMedium),
+          const SizedBox(height: AppDimensions.paddingL),
+          SizedBox(
+            width: 200, 
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pushReplacementNamed('/'), 
+              child: const Text('Ver productos')
+            )
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildCheckoutPanel(BuildContext context) => Container(
-    padding: const EdgeInsets.all(AppDimensions.paddingL),
-    decoration: BoxDecoration(color: AppColors.surface, borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusXL)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, -6))]),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _priceLine('Subtotal', Formatters.precio(_subtotal)),
-        const SizedBox(height: 6),
-        _priceLine('Envío', _shipping == 0 ? 'Gratis' : Formatters.precio(_shipping), valueColor: _shipping == 0 ? AppColors.success : null),
-        const Divider(height: AppDimensions.paddingL, color: AppColors.divider),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Total', style: AppTextStyles.headlineMedium),
-            Text(Formatters.precio(_total), style: AppTextStyles.priceLarge),
-          ],
-        ),
-        const SizedBox(height: AppDimensions.paddingM),
-        ElevatedButton(
-          onPressed: () => Navigator.of(context).pushNamed('/delivery-address', arguments: {'source': 'carrito', 'productos': _items.map((i) => ProductoCheckout(id: i.idproducto, nombre: i.nombre, precio: i.precio, cantidad: i.cantidad)).toList()}),
-          child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.payment_rounded, size: 20), SizedBox(width: 8), Text('Finalizar Compra')]),
-        ),
-      ],
-    ),
-  );
+  Widget _buildCheckoutPanel(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.paddingL),
+      decoration: BoxDecoration(
+        color: colorScheme.surface, 
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusXL)), 
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 20, offset: const Offset(0, -6))]
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _priceLine(context, 'Subtotal', Formatters.precio(_subtotal)),
+          const SizedBox(height: 6),
+          _priceLine(context, 'Envío', _shipping == 0 ? 'Gratis' : Formatters.precio(_shipping), valueColor: _shipping == 0 ? AppColors.success : null),
+          Divider(height: AppDimensions.paddingL, color: colorScheme.outline),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Total', style: textTheme.headlineMedium),
+              Text(Formatters.precio(_total), style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.paddingM),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pushNamed('/delivery-address', arguments: {'source': 'carrito', 'productos': _items.map((i) => ProductoCheckout(id: i.idproducto, nombre: i.nombre, precio: i.precio, cantidad: i.cantidad)).toList()}),
+            child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.payment_rounded, size: 20), SizedBox(width: 8), Text('Finalizar Compra')]),
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _priceLine(String label, String value, {Color? valueColor}) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(label, style: AppTextStyles.bodyMedium),
-      Text(value, style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600, color: valueColor ?? AppColors.textPrimary)),
-    ],
-  );
+  Widget _priceLine(BuildContext context, String label, String value, {Color? valueColor}) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: textTheme.bodyMedium),
+        Text(value, style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600, color: valueColor ?? colorScheme.onSurface)),
+      ],
+    );
+  }
 }
 
 class _CartItemCard extends StatelessWidget {
@@ -249,16 +298,23 @@ class _CartItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingM),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppDimensions.radiusM), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 3))]),
+      decoration: BoxDecoration(
+        color: colorScheme.surface, 
+        borderRadius: BorderRadius.circular(AppDimensions.radiusM), 
+        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.06), blurRadius: 10, offset: const Offset(0, 3))]
+      ),
       child: Row(
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(AppDimensions.radiusS),
             child: Container(
               width: 80, height: 80,
-              color: AppColors.surfaceVariant,
+              color: colorScheme.surfaceVariant,
               child: item.imagenUrl != null
                   ? CachedNetworkImage(
                       imageUrl: item.imagenUrl!,
@@ -272,10 +328,10 @@ class _CartItemCard extends StatelessWidget {
                             color: AppColors.primary, strokeWidth: 2),
                         ),
                       ),
-                      errorWidget: (_, __, ___) => const Icon(
-                        Icons.image_outlined, color: AppColors.textHint),
+                      errorWidget: (_, __, ___) => Icon(
+                        Icons.image_outlined, color: colorScheme.onSurfaceVariant),
                     )
-                  : const Icon(Icons.image_outlined, color: AppColors.textHint),
+                  : Icon(Icons.image_outlined, color: colorScheme.onSurfaceVariant),
             ),
           ),
           const SizedBox(width: AppDimensions.paddingM),
@@ -286,10 +342,14 @@ class _CartItemCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: Text(item.nombre, style: AppTextStyles.titleMedium, maxLines: 2, overflow: TextOverflow.ellipsis)),
+                    Expanded(child: Text(item.nombre, style: textTheme.titleMedium, maxLines: 2, overflow: TextOverflow.ellipsis)),
                     GestureDetector(
                       onTap: processing ? null : onRemove,
-                      child: Container(width: 28, height: 28, decoration: BoxDecoration(color: AppColors.error.withOpacity(0.1), borderRadius: BorderRadius.circular(AppDimensions.radiusS)), child: const Icon(Icons.close_rounded, size: 16, color: AppColors.error)),
+                      child: Container(
+                        width: 28, height: 28, 
+                        decoration: BoxDecoration(color: AppColors.error.withOpacity(0.1), borderRadius: BorderRadius.circular(AppDimensions.radiusS)), 
+                        child: const Icon(Icons.close_rounded, size: 16, color: AppColors.error)
+                      ),
                     ),
                   ],
                 ),
@@ -297,13 +357,13 @@ class _CartItemCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(Formatters.precio(item.precio), style: AppTextStyles.priceStyle),
+                    Text(Formatters.precio(item.precio), style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
                     QuantitySelector(quantity: item.cantidad, onIncrement: processing ? () {} : onIncrement, onDecrement: processing ? () {} : onDecrement),
                   ],
                 ),
                 if (item.cantidad > 1) ...[
                   const SizedBox(height: 4),
-                  Text('Subtotal: ${Formatters.precio(item.totalCalculado)}', style: AppTextStyles.bodySmall.copyWith(color: AppColors.primaryDark, fontWeight: FontWeight.w600)),
+                  Text('Subtotal: ${Formatters.precio(item.totalCalculado)}', style: textTheme.bodySmall?.copyWith(color: AppColors.primaryDark, fontWeight: FontWeight.w600)),
                 ],
               ],
             ),

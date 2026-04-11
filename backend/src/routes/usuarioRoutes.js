@@ -1,7 +1,6 @@
-// src/routes/usuarioRoutes.js
 import express from "express";
 import bcrypt from "bcryptjs";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { supabase } from "../config/db.js";
 import {
   verificarToken,
@@ -20,12 +19,11 @@ const loginLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.body?.email || req.ip, // bloquear por email + IP
+  keyGenerator: (req) => req.body?.email || ipKeyGenerator(req), // bloquear por email + IP (IPv6 safe)
   message: {
     message:
       "Demasiados intentos. Espera 15 minutos antes de intentarlo de nuevo.",
   },
-  trustProxy: true,
 });
 
 // ── Helpers de validación ──────────────────────────────────────────────────

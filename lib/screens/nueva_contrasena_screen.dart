@@ -96,7 +96,6 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
 
     setState(() => _loading = true);
 
-    // POST /api/auth/restablecer  { token, nuevaContrasena }
     final res = await ApiClient.post('/auth/restablecer', {
       'token': widget.token,
       'nuevaContrasena': nueva,
@@ -122,14 +121,17 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: colorScheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textPrimary, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: colorScheme.onSurface, size: 20),
           onPressed: () => Navigator.of(context).pushReplacementNamed('/login'),
         ),
       ),
@@ -156,14 +158,13 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
 
                 const SizedBox(height: AppDimensions.paddingM),
 
-                const Text('Nueva contraseña',
-                    style: AppTextStyles.displayMedium,
+                Text('Nueva contraseña',
+                    style: textTheme.displayMedium,
                     textAlign: TextAlign.center),
                 const SizedBox(height: 6),
                 Text(
                   'Elige una contraseña segura\npara tu cuenta.',
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.textSecondary),
+                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),
 
@@ -174,7 +175,7 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(AppDimensions.paddingL),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
                     boxShadow: [
                       BoxShadow(
@@ -184,7 +185,7 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
                       ),
                     ],
                   ),
-                  child: _exitoso ? _buildExito() : _buildForm(),
+                  child: _exitoso ? _buildExito(context) : _buildForm(context),
                 ),
 
                 const SizedBox(height: AppDimensions.paddingXXL),
@@ -196,21 +197,24 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
     );
   }
 
-  Widget _buildForm() {
+  Widget _buildForm(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Campo nueva contraseña ──────────────────────────────────────────
         Text('Nueva contraseña:',
-            style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            style: textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
         const SizedBox(height: 6),
         TextField(
           controller: _nuevaController,
           focusNode: _nuevaFocus,
           obscureText: _obscureNueva,
           textInputAction: TextInputAction.next,
-          style: AppTextStyles.bodyMedium,
+          style: textTheme.bodyMedium,
           onChanged: (_) {
             if (_nuevaError) setState(() { _nuevaError = false; _errorMsg = null; });
           },
@@ -218,19 +222,19 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
           decoration: InputDecoration(
             hintText: 'Mínimo 6 caracteres',
             prefixIcon: Icon(Icons.lock_outline_rounded,
-                color: _nuevaError ? AppColors.error : AppColors.textHint,
+                color: _nuevaError ? AppColors.error : colorScheme.onSurfaceVariant,
                 size: AppDimensions.iconS),
             suffixIcon: IconButton(
               icon: Icon(
                 _obscureNueva ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                color: AppColors.textHint, size: AppDimensions.iconS,
+                color: colorScheme.onSurfaceVariant, size: AppDimensions.iconS,
               ),
               onPressed: () => setState(() => _obscureNueva = !_obscureNueva),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radiusM),
               borderSide: BorderSide(
-                  color: _nuevaError ? AppColors.error : AppColors.border,
+                  color: _nuevaError ? AppColors.error : colorScheme.outline,
                   width: _nuevaError ? 1.5 : 1),
             ),
             focusedBorder: OutlineInputBorder(
@@ -252,8 +256,7 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
                         color: AppColors.error, size: 13),
                     const SizedBox(width: 4),
                     Expanded(child: Text(_errorMsg!,
-                        style: AppTextStyles.bodySmall
-                            .copyWith(color: AppColors.error, fontSize: 11))),
+                        style: textTheme.bodySmall?.copyWith(color: AppColors.error, fontSize: 11))),
                   ]),
                 )
               : const SizedBox.shrink(),
@@ -263,15 +266,15 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
 
         // ── Campo confirmar ─────────────────────────────────────────────────
         Text('Confirmar contraseña:',
-            style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            style: textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
         const SizedBox(height: 6),
         TextField(
           controller: _confirmarController,
           focusNode: _confirmarFocus,
           obscureText: _obscureConfirmar,
           textInputAction: TextInputAction.done,
-          style: AppTextStyles.bodyMedium,
+          style: textTheme.bodyMedium,
           onChanged: (_) {
             if (_confirmarError) setState(() { _confirmarError = false; _errorMsg = null; });
           },
@@ -279,19 +282,19 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
           decoration: InputDecoration(
             hintText: 'Repite tu nueva contraseña',
             prefixIcon: Icon(Icons.lock_outline_rounded,
-                color: _confirmarError ? AppColors.error : AppColors.textHint,
+                color: _confirmarError ? AppColors.error : colorScheme.onSurfaceVariant,
                 size: AppDimensions.iconS),
             suffixIcon: IconButton(
               icon: Icon(
                 _obscureConfirmar ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                color: AppColors.textHint, size: AppDimensions.iconS,
+                color: colorScheme.onSurfaceVariant, size: AppDimensions.iconS,
               ),
               onPressed: () => setState(() => _obscureConfirmar = !_obscureConfirmar),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radiusM),
               borderSide: BorderSide(
-                  color: _confirmarError ? AppColors.error : AppColors.border,
+                  color: _confirmarError ? AppColors.error : colorScheme.outline,
                   width: _confirmarError ? 1.5 : 1),
             ),
             focusedBorder: OutlineInputBorder(
@@ -314,8 +317,7 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
                         color: AppColors.error, size: 13),
                     const SizedBox(width: 4),
                     Expanded(child: Text(_errorMsg!,
-                        style: AppTextStyles.bodySmall
-                            .copyWith(color: AppColors.error, fontSize: 11))),
+                        style: textTheme.bodySmall?.copyWith(color: AppColors.error, fontSize: 11))),
                   ]),
                 )
               : const SizedBox.shrink(),
@@ -339,7 +341,7 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
           child: GestureDetector(
             onTap: () => Navigator.of(context).pushReplacementNamed('/login'),
             child: Text('Volver al inicio de sesión',
-                style: AppTextStyles.bodySmall.copyWith(
+                style: textTheme.bodySmall?.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w700,
                   decoration: TextDecoration.underline,
@@ -350,7 +352,10 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
     );
   }
 
-  Widget _buildExito() {
+  Widget _buildExito(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Column(
       children: [
         const SizedBox(height: AppDimensions.paddingM),
@@ -367,15 +372,14 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
 
         const SizedBox(height: AppDimensions.paddingM),
 
-        const Text('¡Contraseña actualizada!',
-            style: AppTextStyles.headlineMedium,
+        Text('¡Contraseña actualizada!',
+            style: textTheme.headlineMedium,
             textAlign: TextAlign.center),
         const SizedBox(height: 8),
 
         Text(
           'Ya puedes iniciar sesión\ncon tu nueva contraseña.',
-          style: AppTextStyles.bodySmall
-              .copyWith(color: AppColors.textSecondary, height: 1.5),
+          style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, height: 1.5),
           textAlign: TextAlign.center,
         ),
 

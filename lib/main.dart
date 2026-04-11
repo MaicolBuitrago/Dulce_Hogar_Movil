@@ -1,13 +1,3 @@
-// lib/main.dart
-//
-// Cambios:
-//  • Llama a AuthService.checkSesionActiva() antes de arrancar
-//  • Si hay sesión activa → va directo al home (sin pasar por login)
-//  • Pasa navigatorKey a MaterialApp para que ApiClient pueda redirigir
-//    al login cuando el refresh token expira (sin contexto)
-//  • LoginScreen recibe argumento opcional 'mensaje' para mostrar snackbar
-//    de "sesión expirada"
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'theme/app_theme.dart';
@@ -24,7 +14,14 @@ import 'screens/recuperar_contrasena_screen.dart';
 import 'screens/nueva_contrasena_screen.dart';
 import 'screens/perfil_screen.dart';
 import 'services/api_client.dart';
+import 'services/theme_service.dart';
 import 'services/auth_service.dart';
+import 'screens/orders_screen.dart';
+import 'screens/onboarding_screen.dart';
+
+// Variable global para saber la ruta después del onboarding
+// (Se usa en onGenerateRoute)
+String _nextRouteAfterOnboarding = '/login';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,17 +37,24 @@ void main() async {
     ),
   );
 
-  // ── Verificar sesión guardada ────────────────────────────────────────────
-  // Si hay token válido o refresh exitoso → irá al home
-  // Si no → irá al login normalmente
-  final sesionActiva = await AuthService.checkSesionActiva();
+  await ThemeService.init();
 
-  runApp(DulceHogarApp(sesionActiva: sesionActiva));
+  final sesionActiva      = await AuthService.checkSesionActiva();
+  final onboardingVisto   = await onboardingFueVisto();
+  
+  // ✅ Guardar la ruta siguiente para usarla en onGenerateRoute
+  _nextRouteAfterOnboarding = sesionActiva ? '/' : '/login';
+
+  runApp(DulceHogarApp(
+    sesionActiva:    sesionActiva,
+    onboardingVisto: onboardingVisto,
+  ));
 }
 
 class DulceHogarApp extends StatefulWidget {
   final bool sesionActiva;
-  const DulceHogarApp({super.key, required this.sesionActiva});
+  final bool onboardingVisto;
+  const DulceHogarApp({super.key, required this.sesionActiva, required this.onboardingVisto});
 
   @override
   State<DulceHogarApp> createState() => _DulceHogarAppState();
@@ -93,23 +97,29 @@ class _DulceHogarAppState extends State<DulceHogarApp>
         pathSegments.first == 'reset-password' &&
         pathSegments.length >= 2;
 
-    // Ruta inicial: si hay sesión activa, home; si no, login
+    // Ruta inicial
     final String initialRoute = isResetPassword
         ? '${AppRoutes.resetPassword}/${pathSegments[1]}'
         : isPaymentSuccess
             ? AppRoutes.paymentSuccess
-            : widget.sesionActiva
-                ? AppRoutes.home
-                : AppRoutes.login;
+            : !widget.onboardingVisto
+                ? AppRoutes.onboarding
+                : widget.sesionActiva
+                    ? AppRoutes.home
+                    : AppRoutes.login;
 
-    return MaterialApp(
-      title:                  'Dulce Hogar',
-      debugShowCheckedModeBanner: false,
-      theme:                  AppTheme.lightTheme,
-      // navigatorKey permite a ApiClient redirigir al login sin contexto
-      navigatorKey:           ApiClient.navigatorKey,
-      initialRoute:           initialRoute,
-      onGenerateRoute:        AppRoutes.onGenerateRoute,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeService.themeMode,
+      builder: (context, themeMode, _) => MaterialApp(
+        title:                  'Dulce Hogar',
+        debugShowCheckedModeBanner: false,
+        theme:                  AppTheme.lightTheme,
+        darkTheme:              AppTheme.darkTheme,
+        themeMode:              themeMode,
+        navigatorKey:           ApiClient.navigatorKey,
+        initialRoute:           initialRoute,
+        onGenerateRoute:        AppRoutes.onGenerateRoute,
+      ),
     );
   }
 }
@@ -130,6 +140,8 @@ class AppRoutes {
   static const String recuperarContrasena = '/recuperar-contrasena';
   static const String resetPassword       = '/reset-password';
   static const String perfil              = '/perfil';
+  static const String misPedidos          = '/mis-pedidos';
+  static const String onboarding          = '/onboarding';
 
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     final name = settings.name ?? '';
@@ -169,6 +181,9 @@ class AppRoutes {
       paymentSuccess:      (_) => const PaymentSuccessScreen(),
       recuperarContrasena: (_) => const RecuperarContrasenaScreen(),
       perfil:              (_) => const PerfilScreen(),
+      misPedidos:          (_) => const OrdersScreen(),
+      // ✅ Usar la variable global para la ruta después del onboarding
+      onboarding:          (_) => OnboardingScreen(nextRoute: _nextRouteAfterOnboarding),
     };
 
     final builder = builders[name];

@@ -113,19 +113,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final p = _producto;
+    
     if (p == null) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFF8FAFC),
+      return Scaffold(
+        backgroundColor: colorScheme.background,
         body: Center(child: Text('Producto no encontrado',
-            style: TextStyle(fontFamily: 'Nunito', color: AppColors.textSecondary))),
+            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant))),
       );
     }
 
     final images = p.imagenes.isNotEmpty ? p.imagenes : <String>[];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colorScheme.background,
       bottomNavigationBar: const SharedBottomNav(),
       body: Stack(
         children: [
@@ -143,10 +146,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 
           Column(
             children: [
-              // ── Galería (sin SafeArea para que vaya al borde) ──
               _buildGallery(context, images),
-
-              // ── Contenido scrollable ──
               Expanded(
                 child: FadeTransition(
                   opacity: _fadeAnim,
@@ -159,17 +159,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 20),
-                          _buildNameAndBadge(p),
+                          _buildNameAndBadge(context, p),
                           const SizedBox(height: 14),
-                          _buildPriceRow(p),
+                          _buildPriceRow(context, p),
                           const SizedBox(height: 20),
                           if (p.descripcion != null) ...[
-                            _buildDescriptionCard(p.descripcion!),
+                            _buildDescriptionCard(context, p.descripcion!),
                             const SizedBox(height: 16),
                           ],
-                          _buildStockAndQuantity(p),
+                          _buildStockAndQuantity(context, p),
                           const SizedBox(height: 16),
-                          _buildPaymentCard(),
+                          _buildPaymentCard(context),
                           const SizedBox(height: 8),
                         ],
                       ),
@@ -179,36 +179,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               ),
             ],
           ),
-
-          // ── Barra de acciones fija abajo ──
           Positioned(
             bottom: 0, left: 0, right: 0,
-            child: _buildBottomActions(p),
+            child: _buildBottomActions(context, p),
           ),
         ],
       ),
     );
   }
 
-  // ─── Galería ──────────────────────────────────────────────────────────────
   Widget _buildGallery(BuildContext context, List<String> images) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return SizedBox(
       height: 310,
       child: Stack(
         children: [
-          // Imagen / PageView
           Container(
             height: 310,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.only(
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceVariant,
+              borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(28),
                 bottomRight: Radius.circular(28),
               ),
             ),
             clipBehavior: Clip.antiAlias,
             child: images.isEmpty
-                ? const Center(child: Icon(Icons.image_outlined, size: 72, color: AppColors.textHint))
+                ? Center(child: Icon(Icons.image_outlined, size: 72, color: colorScheme.onSurfaceVariant))
                 : PageView.builder(
                     controller: _pageController,
                     itemCount: images.length,
@@ -219,12 +217,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                       placeholder: (_, __) => const Center(
                           child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2)),
                       errorWidget: (_, __, ___) =>
-                          const Center(child: Icon(Icons.image_outlined, size: 72, color: AppColors.textHint)),
+                          Center(child: Icon(Icons.image_outlined, size: 72, color: colorScheme.onSurfaceVariant)),
                     ),
                   ),
           ),
-
-          // Gradiente superior para botones
           Positioned(
             top: 0, left: 0, right: 0, height: 90,
             child: Container(
@@ -241,8 +237,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               ),
             ),
           ),
-
-          // Botón atrás
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
             left: 16,
@@ -251,17 +245,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               child: Container(
                 width: 40, height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.92),
+                  color: colorScheme.surface.withOpacity(0.92),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)],
                 ),
-                child: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: AppColors.textPrimary, size: 16),
+                child: Icon(Icons.arrow_back_ios_new_rounded,
+                    color: colorScheme.onSurface, size: 16),
               ),
             ),
           ),
-
-          // Botón favorito
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
             right: 16,
@@ -273,7 +265,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 decoration: BoxDecoration(
                   color: _isFavorite
                       ? AppColors.error.withOpacity(0.12)
-                      : Colors.white.withOpacity(0.92),
+                      : colorScheme.surface.withOpacity(0.92),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8)],
                   border: Border.all(
@@ -286,14 +278,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                         child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
                     : Icon(
                         _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                        color: _isFavorite ? AppColors.error : AppColors.textSecondary,
+                        color: _isFavorite ? AppColors.error : colorScheme.onSurfaceVariant,
                         size: 19,
                       ),
               ),
             ),
           ),
-
-          // Dots indicadores
           if (images.length > 1)
             Positioned(
               bottom: 14, left: 0, right: 0,
@@ -311,8 +301,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 )),
               ),
             ),
-
-          // Contador de imágenes (esquina)
           if (images.length > 1)
             Positioned(
               bottom: 14, right: 16,
@@ -334,308 +322,326 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     );
   }
 
-  // ─── Nombre y badge ───────────────────────────────────────────────────────
-  Widget _buildNameAndBadge(Producto p) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Badge disponibilidad
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: p.disponible ? AppColors.primaryPale : const Color(0xFFFEF2F2),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: p.disponible ? AppColors.primaryBorder : AppColors.error.withOpacity(0.3),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 6, height: 6,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: p.disponible ? AppColors.primary : AppColors.error,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              p.disponible ? 'En stock' : 'Sin stock',
-              style: TextStyle(
-                fontFamily: 'Nunito', fontSize: 11, fontWeight: FontWeight.w700,
-                color: p.disponible ? AppColors.primaryDark : AppColors.error,
-              ),
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 10),
-      Text(
-        p.nombre,
-        style: const TextStyle(
-          fontFamily: 'Nunito', fontSize: 26, fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary, height: 1.15, letterSpacing: -0.5,
-        ),
-      ),
-    ],
-  );
-
-  // ─── Precio ───────────────────────────────────────────────────────────────
-  Widget _buildPriceRow(Producto p) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [Color(0xFFF0FDF4), Color(0xFFDCFCE7)],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-      ),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppColors.primaryBorder),
-    ),
-    child: Row(
+  Widget _buildNameAndBadge(BuildContext context, Producto p) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: p.disponible ? AppColors.primaryPale : const Color(0xFFFEF2F2),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: p.disponible ? AppColors.primaryBorder : AppColors.error.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Precio', style: TextStyle(
-                fontFamily: 'Nunito', fontSize: 11, fontWeight: FontWeight.w600,
-                color: AppColors.primaryDark,
-              )),
-              const SizedBox(height: 2),
+              Container(
+                width: 6, height: 6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: p.disponible ? AppColors.primary : AppColors.error,
+                ),
+              ),
+              const SizedBox(width: 6),
               Text(
-                Formatters.precio(p.precio),
-                style: const TextStyle(
-                  fontFamily: 'Nunito', fontSize: 28, fontWeight: FontWeight.w800,
-                  color: AppColors.priceColor, letterSpacing: -0.5,
+                p.disponible ? 'En stock' : 'Sin stock',
+                style: TextStyle(
+                  fontFamily: 'Nunito', fontSize: 11, fontWeight: FontWeight.w700,
+                  color: p.disponible ? AppColors.primaryDark : AppColors.error,
                 ),
               ),
             ],
           ),
         ),
-        // Stock badge
-        if (p.disponible)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.primaryBorder),
-            ),
+        const SizedBox(height: 10),
+        Text(
+          p.nombre,
+          style: textTheme.displayLarge?.copyWith(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            height: 1.15,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPriceRow(BuildContext context, Producto p) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: p.disponible 
+              ? [const Color(0xFFF0FDF4), const Color(0xFFDCFCE7)]
+              : [colorScheme.surfaceVariant, colorScheme.surfaceVariant],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: p.disponible ? AppColors.primaryBorder : colorScheme.outline),
+      ),
+      child: Row(
+        children: [
+          Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.inventory_2_outlined, size: 16, color: AppColors.primary),
+                Text('Precio', style: TextStyle(
+                  fontFamily: 'Nunito', fontSize: 11, fontWeight: FontWeight.w600,
+                  color: p.disponible ? AppColors.primaryDark : colorScheme.onSurfaceVariant,
+                )),
                 const SizedBox(height: 2),
-                Text('${p.stock}', style: const TextStyle(
-                  fontFamily: 'Nunito', fontSize: 14, fontWeight: FontWeight.w800,
-                  color: AppColors.primaryDark,
-                )),
-                const Text('uds.', style: TextStyle(
-                  fontFamily: 'Nunito', fontSize: 10, color: AppColors.textSecondary,
-                )),
+                Text(
+                  Formatters.precio(p.precio),
+                  style: TextStyle(
+                    fontFamily: 'Nunito', fontSize: 28, fontWeight: FontWeight.w800,
+                    color: p.disponible ? AppColors.priceColor : colorScheme.onSurfaceVariant,
+                    letterSpacing: -0.5,
+                  ),
+                ),
               ],
             ),
           ),
-      ],
-    ),
-  );
-
-  // ─── Descripción ─────────────────────────────────────────────────────────
-  Widget _buildDescriptionCard(String desc) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
+          if (p.disponible)
             Container(
-              width: 28, height: 28,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.secondaryLight,
-                borderRadius: BorderRadius.circular(8),
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.primaryBorder),
               ),
-              child: const Icon(Icons.description_outlined, size: 14, color: AppColors.secondary),
+              child: Column(
+                children: [
+                  const Icon(Icons.inventory_2_outlined, size: 16, color: AppColors.primary),
+                  const SizedBox(height: 2),
+                  Text('${p.stock}', style: const TextStyle(
+                    fontFamily: 'Nunito', fontSize: 14, fontWeight: FontWeight.w800,
+                    color: AppColors.primaryDark,
+                  )),
+                  Text('uds.', style: TextStyle(
+                    fontFamily: 'Nunito', fontSize: 10, color: colorScheme.onSurfaceVariant,
+                  )),
+                ],
+              ),
             ),
-            const SizedBox(width: 9),
-            const Text('Descripción', style: TextStyle(
-              fontFamily: 'Nunito', fontSize: 13, fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-            )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDescriptionCard(BuildContext context, String desc) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 28, height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.secondaryLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.description_outlined, size: 14, color: AppColors.secondary),
+              ),
+              const SizedBox(width: 9),
+              Text('Descripción', style: TextStyle(
+                fontFamily: 'Nunito', fontSize: 13, fontWeight: FontWeight.w700,
+                color: colorScheme.onSurfaceVariant,
+              )),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            desc,
+            style: TextStyle(
+              fontFamily: 'Nunito', fontSize: 14, color: colorScheme.onSurfaceVariant,
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStockAndQuantity(BuildContext context, Producto p) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 28, height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryPale,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.shopping_bag_outlined, size: 14, color: AppColors.primaryDark),
+              ),
+              const SizedBox(width: 9),
+              Text('Cantidad a comprar', style: TextStyle(
+                fontFamily: 'Nunito', fontSize: 13, fontWeight: FontWeight.w700,
+                color: colorScheme.onSurfaceVariant,
+              )),
+            ],
+          ),
+          if (p.disponible) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                _buildQtyButton(context,
+                  icon: Icons.remove_rounded,
+                  onTap: _selectedQuantity > 1
+                      ? () => setState(() => _selectedQuantity--)
+                      : null,
+                ),
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 36,
+                  child: Text(
+                    '$_selectedQuantity',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Nunito', fontSize: 20, fontWeight: FontWeight.w800,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                _buildQtyButton(context,
+                  icon: Icons.add_rounded,
+                  onTap: _selectedQuantity < (p.stock > 10 ? 10 : p.stock)
+                      ? () => setState(() => _selectedQuantity++)
+                      : null,
+                ),
+                const Spacer(),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('Subtotal', style: TextStyle(
+                      fontFamily: 'Nunito', fontSize: 11, color: colorScheme.onSurfaceVariant,
+                    )),
+                    Text(
+                      Formatters.precio(p.precio * _selectedQuantity),
+                      style: TextStyle(
+                        fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w800,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ] else ...[
+            const SizedBox(height: 10),
+            Text('Este producto no está disponible por el momento.',
+                style: TextStyle(fontFamily: 'Nunito', fontSize: 13, color: AppColors.error)),
           ],
-        ),
-        const SizedBox(height: 12),
-        Text(
-          desc,
-          style: const TextStyle(
-            fontFamily: 'Nunito', fontSize: 14, color: AppColors.textSecondary,
-            height: 1.6,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQtyButton(BuildContext context, {required IconData icon, VoidCallback? onTap}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 38, height: 38,
+        decoration: BoxDecoration(
+          color: onTap != null ? AppColors.primaryPale : colorScheme.surfaceVariant,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: onTap != null ? AppColors.primaryBorder : colorScheme.outline,
           ),
         ),
-      ],
-    ),
-  );
+        child: Icon(icon, size: 18,
+            color: onTap != null ? AppColors.primaryDark : colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
 
-  // ─── Stock + Cantidad ─────────────────────────────────────────────────────
-  Widget _buildStockAndQuantity(Producto p) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 28, height: 28,
-              decoration: BoxDecoration(
-                color: AppColors.primaryPale,
-                borderRadius: BorderRadius.circular(8),
+  Widget _buildPaymentCard(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 28, height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.accentLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.payment_rounded, size: 14, color: AppColors.accent),
               ),
-              child: const Icon(Icons.shopping_bag_outlined, size: 14, color: AppColors.primaryDark),
-            ),
-            const SizedBox(width: 9),
-            const Text('Cantidad a comprar', style: TextStyle(
-              fontFamily: 'Nunito', fontSize: 13, fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-            )),
-          ],
-        ),
-        if (p.disponible) ...[
+              const SizedBox(width: 9),
+              Text('Medios de pago', style: TextStyle(
+                fontFamily: 'Nunito', fontSize: 13, fontWeight: FontWeight.w700,
+                color: colorScheme.onSurfaceVariant,
+              )),
+            ],
+          ),
           const SizedBox(height: 14),
           Row(
             children: [
-              // Botón –
-              _buildQtyButton(
-                icon: Icons.remove_rounded,
-                onTap: _selectedQuantity > 1
-                    ? () => setState(() => _selectedQuantity--)
-                    : null,
-              ),
-              const SizedBox(width: 16),
-              // Número
-              SizedBox(
-                width: 36,
-                child: Text(
-                  '$_selectedQuantity',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'Nunito', fontSize: 20, fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Botón +
-              _buildQtyButton(
-                icon: Icons.add_rounded,
-                onTap: _selectedQuantity < (p.stock > 10 ? 10 : p.stock)
-                    ? () => setState(() => _selectedQuantity++)
-                    : null,
-              ),
-              const Spacer(),
-              // Subtotal
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Text('Subtotal', style: TextStyle(
-                    fontFamily: 'Nunito', fontSize: 11, color: AppColors.textHint,
-                  )),
-                  Text(
-                    Formatters.precio(p.precio * _selectedQuantity),
-                    style: const TextStyle(
-                      fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w800,
-                      color: AppColors.priceColor,
-                    ),
-                  ),
-                ],
-              ),
+              _buildPaymentChip('VISA', const Color(0xFF1A1F71)),
+              const SizedBox(width: 8),
+              _buildPaymentChip('MC', const Color(0xFFEB001B)),
+              const SizedBox(width: 8),
+              _buildPaymentChip('AMEX', const Color(0xFF2E77BC)),
+              const SizedBox(width: 8),
+              _buildPaymentChip('JCB', const Color(0xFF003087)),
             ],
           ),
-        ] else ...[
-          const SizedBox(height: 10),
-          const Text('Este producto no está disponible por el momento.',
-              style: TextStyle(fontFamily: 'Nunito', fontSize: 13, color: AppColors.error)),
         ],
-      ],
-    ),
-  );
-
-  Widget _buildQtyButton({required IconData icon, VoidCallback? onTap}) =>
-      GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          width: 38, height: 38,
-          decoration: BoxDecoration(
-            color: onTap != null ? AppColors.primaryPale : const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: onTap != null ? AppColors.primaryBorder : AppColors.border,
-            ),
-          ),
-          child: Icon(icon, size: 18,
-              color: onTap != null ? AppColors.primaryDark : AppColors.textHint),
-        ),
-      );
-
-  // ─── Medios de pago ───────────────────────────────────────────────────────
-  Widget _buildPaymentCard() => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 28, height: 28,
-              decoration: BoxDecoration(
-                color: AppColors.accentLight,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(Icons.payment_rounded, size: 14, color: AppColors.accent),
-            ),
-            const SizedBox(width: 9),
-            const Text('Medios de pago', style: TextStyle(
-              fontFamily: 'Nunito', fontSize: 13, fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-            )),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            _buildPaymentChip('VISA', const Color(0xFF1A1F71)),
-            const SizedBox(width: 8),
-            _buildPaymentChip('MC', const Color(0xFFEB001B)),
-            const SizedBox(width: 8),
-            _buildPaymentChip('AMEX', const Color(0xFF2E77BC)),
-            const SizedBox(width: 8),
-            _buildPaymentChip('JCB', const Color(0xFF003087)),
-          ],
-        ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 
   Widget _buildPaymentChip(String label, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
@@ -649,98 +655,99 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     )),
   );
 
-  // ─── Acciones inferiores ──────────────────────────────────────────────────
-  Widget _buildBottomActions(Producto p) => Container(
-    padding: EdgeInsets.fromLTRB(
-        20, 14, 20, MediaQuery.of(context).padding.bottom + 14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(24),
-        topRight: Radius.circular(24),
+  Widget _buildBottomActions(BuildContext context, Producto p) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+          20, 14, 20, MediaQuery.of(context).padding.bottom + 14),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 20, offset: const Offset(0, -4)),
+        ],
       ),
-      boxShadow: [
-        BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 20, offset: const Offset(0, -4)),
-      ],
-    ),
-    child: Row(
-      children: [
-        // Comprar ahora
-        Expanded(
-          flex: 3,
-          child: GestureDetector(
-            onTap: p.disponible ? () {
-              Navigator.of(context).pushNamed('/delivery-address', arguments: {
-                'productos': [ProductoCheckout(
-                  id: p.idproducto, nombre: p.nombre,
-                  precio: p.precio, cantidad: _selectedQuantity,
-                )]
-              });
-            } : null,
-            child: AnimatedOpacity(
-              opacity: p.disponible ? 1.0 : 0.4,
-              duration: const Duration(milliseconds: 200),
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: GestureDetector(
+              onTap: p.disponible ? () {
+                Navigator.of(context).pushNamed('/delivery-address', arguments: {
+                  'productos': [ProductoCheckout(
+                    id: p.idproducto, nombre: p.nombre,
+                    precio: p.precio, cantidad: _selectedQuantity,
+                  )]
+                });
+              } : null,
+              child: AnimatedOpacity(
+                opacity: p.disponible ? 1.0 : 0.4,
+                duration: const Duration(milliseconds: 200),
+                child: Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: p.disponible ? [
+                      BoxShadow(color: AppColors.primary.withOpacity(0.3),
+                          blurRadius: 12, offset: const Offset(0, 4)),
+                    ] : [],
                   ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: p.disponible ? [
-                    BoxShadow(color: AppColors.primary.withOpacity(0.3),
-                        blurRadius: 12, offset: const Offset(0, 4)),
-                  ] : [],
-                ),
-                child: const Center(
-                  child: Text('Comprar ahora', style: TextStyle(
-                    fontFamily: 'Nunito', fontSize: 14, fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  )),
+                  child: const Center(
+                    child: Text('Comprar ahora', style: TextStyle(
+                      fontFamily: 'Nunito', fontSize: 14, fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    )),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        // Agregar al carrito
-        Expanded(
-          flex: 2,
-          child: GestureDetector(
-            onTap: (p.disponible && !_addingToCart) ? _addToCart : null,
-            child: AnimatedOpacity(
-              opacity: p.disponible ? 1.0 : 0.4,
-              duration: const Duration(milliseconds: 200),
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AppColors.secondaryLight,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
-                ),
-                child: Center(
-                  child: _addingToCart
-                      ? const SizedBox(width: 20, height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.secondary))
-                      : const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.shopping_cart_outlined, size: 17, color: AppColors.secondary),
-                            SizedBox(width: 6),
-                            Text('Carrito', style: TextStyle(
-                              fontFamily: 'Nunito', fontSize: 13, fontWeight: FontWeight.w700,
-                              color: AppColors.secondary,
-                            )),
-                          ],
-                        ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 2,
+            child: GestureDetector(
+              onTap: (p.disponible && !_addingToCart) ? _addToCart : null,
+              child: AnimatedOpacity(
+                opacity: p.disponible ? 1.0 : 0.4,
+                duration: const Duration(milliseconds: 200),
+                child: Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppColors.secondaryLight,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+                  ),
+                  child: Center(
+                    child: _addingToCart
+                        ? const SizedBox(width: 20, height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.secondary))
+                        : const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.shopping_cart_outlined, size: 17, color: AppColors.secondary),
+                              SizedBox(width: 6),
+                              Text('Carrito', style: TextStyle(
+                                fontFamily: 'Nunito', fontSize: 13, fontWeight: FontWeight.w700,
+                                color: AppColors.secondary,
+                              )),
+                            ],
+                          ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }

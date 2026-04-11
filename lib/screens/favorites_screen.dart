@@ -77,28 +77,66 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         content: Text(r.error ?? 'No se pudo quitar el favorito'),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+        duration: Duration(seconds: 2),
       ));
     }
   }
 
   Future<void> _addToCart(Favorito fav) async {
-    final r = await CartService.agregar(idproducto: fav.idproducto, cantidad: 1);
+    // 1. Intentar agregar al carrito
+    final cartResult = await CartService.agregar(
+      idproducto: fav.idproducto,
+      cantidad: 1,
+    );
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(r.ok
-          ? '${fav.nombre} agregado al carrito 🛒'
-          : (r.error ?? 'No se pudo agregar al carrito')),
-      backgroundColor: r.ok ? AppColors.success : AppColors.error,
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(seconds: 2),
-    ));
+
+    if (!cartResult.ok) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(cartResult.error ?? 'No se pudo agregar al carrito'),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ));
+      return;
+    }
+
+    // 2. Carrito OK → eliminar de favoritos automáticamente
+    await FavoritesService.eliminar(fav.idproducto);
+    if (!mounted) return;
+
+    // 3. Quitar la card de la lista local
+    setState(() => _favorites.removeWhere((f) => f.idproducto == fav.idproducto));
+
+    // 4. Snackbar informativo
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.shopping_cart_checkout_rounded,
+                color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '${fav.nombre} fue al carrito 🛒 y se quitó de favoritos ❤️',
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.background,
       bottomNavigationBar: const SharedBottomNav(),
       body: SafeArea(
         child: Column(
@@ -108,7 +146,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               const Expanded(
                   child: Center(child: CircularProgressIndicator(color: AppColors.primary)))
             else if (_favorites.isEmpty)
-              Expanded(child: _buildEmptyState())
+              Expanded(child: _buildEmptyState(context))
             else
               Expanded(
                 child: RefreshIndicator(
@@ -146,59 +184,68 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) => Container(
-        color: AppColors.surface,
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingM),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.of(context).maybePop(),
-              child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                      color: AppColors.surfaceVariant,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusM)),
-                  child: const Icon(Icons.arrow_back_rounded,
-                      color: AppColors.textPrimary, size: 20)),
-            ),
-            const SizedBox(width: AppDimensions.paddingM),
-            const Icon(Icons.favorite_rounded, color: AppColors.error, size: 26),
-            const SizedBox(width: 8),
-            Expanded(
-                child: Text(
-                    'Mis Favoritos${_favorites.isNotEmpty ? ' (${_favorites.length})' : ''}',
-                    style: AppTextStyles.headlineLarge)),
-          ],
-        ),
-      );
-
-  Widget _buildEmptyState() => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-                width: 100,
-                height: 100,
+  Widget _buildHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Container(
+      color: colorScheme.surface,
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingM),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).maybePop(),
+            child: Container(
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                    color: AppColors.error.withOpacity(0.08),
-                    shape: BoxShape.circle),
-                child: const Icon(Icons.favorite_border_rounded,
-                    size: 48, color: AppColors.error)),
-            const SizedBox(height: AppDimensions.paddingL),
-            const Text('Sin favoritos aún', style: AppTextStyles.headlineMedium),
-            const SizedBox(height: 8),
-            const Text('Guarda productos que te gusten', style: AppTextStyles.bodyMedium),
-            const SizedBox(height: AppDimensions.paddingL),
-            SizedBox(
-                width: 200,
-                child: ElevatedButton(
-                    onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
-                    child: const Text('Explorar productos'))),
-          ],
-        ),
-      );
+                    color: colorScheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusM)),
+                child: Icon(Icons.arrow_back_rounded,
+                    color: colorScheme.onSurface, size: 20)),
+          ),
+          const SizedBox(width: AppDimensions.paddingM),
+          const Icon(Icons.favorite_rounded, color: AppColors.error, size: 26),
+          const SizedBox(width: 8),
+          Expanded(
+              child: Text(
+                  'Mis Favoritos${_favorites.isNotEmpty ? ' (${_favorites.length})' : ''}',
+                  style: textTheme.headlineLarge)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                  color: AppColors.error.withOpacity(0.08),
+                  shape: BoxShape.circle),
+              child: const Icon(Icons.favorite_border_rounded,
+                  size: 48, color: AppColors.error)),
+          const SizedBox(height: AppDimensions.paddingL),
+          Text('Sin favoritos aún', style: textTheme.headlineMedium),
+          const SizedBox(height: 8),
+          Text('Guarda productos que te gusten', style: textTheme.bodyMedium),
+          const SizedBox(height: AppDimensions.paddingL),
+          SizedBox(
+              width: 200,
+              child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
+                  child: const Text('Explorar productos'))),
+        ],
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -233,6 +280,8 @@ class _FavoriteCardState extends State<_FavoriteCard> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final fav = widget.fav;
     final img = fav.imagen;
     final hasStock = fav.stock > 0;
@@ -242,7 +291,7 @@ class _FavoriteCardState extends State<_FavoriteCard> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
           boxShadow: [
             BoxShadow(
@@ -252,168 +301,169 @@ class _FavoriteCardState extends State<_FavoriteCard> {
             )
           ],
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Imagen ──────────────────────────────────────────────
-            ClipRRect(
-              borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(AppDimensions.radiusL)),
-              child: SizedBox(
-                width: 110,
-                height: 130,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    img != null
-                        ? CachedNetworkImage(
-                            imageUrl: img,
-                            fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) => Container(
-                                color: AppColors.surfaceVariant,
-                                child: const Icon(Icons.image_outlined,
-                                    color: AppColors.textHint, size: 36)),
-                          )
-                        : Container(
-                            color: AppColors.surfaceVariant,
-                            child: const Icon(Icons.image_outlined,
-                                color: AppColors.textHint, size: 36)),
-                    // Overlay sin stock sobre la imagen
-                    if (!hasStock)
-                      Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 5),
-                          color: Colors.black.withOpacity(0.55),
-                          child: const Text(
-                            'Sin stock',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: AppTextStyles.fontFamily,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Imagen ──────────────────────────────────────────────
+              ClipRRect(
+                borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(AppDimensions.radiusL)),
+                child: SizedBox(
+                  width: 110,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      img != null
+                          ? CachedNetworkImage(
+                              imageUrl: img,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) => Container(
+                                  color: colorScheme.surfaceVariant,
+                                  child: Icon(Icons.image_outlined,
+                                      color: colorScheme.onSurfaceVariant, size: 36)),
+                            )
+                          : Container(
+                              color: colorScheme.surfaceVariant,
+                              child: Icon(Icons.image_outlined,
+                                  color: colorScheme.onSurfaceVariant, size: 36)),
+                      // Overlay sin stock sobre la imagen
+                      if (!hasStock)
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            color: Colors.black.withOpacity(0.55),
+                            child: const Text(
+                              'Sin stock',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: AppTextStyles.fontFamily,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // ── Info + botones ───────────────────────────────────────
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Nombre
-                    Text(
-                      fav.nombre,
-                      style: AppTextStyles.titleMedium,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 5),
-
-                    // Badge disponibilidad
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: hasStock
-                            ? AppColors.success.withOpacity(0.12)
-                            : AppColors.error.withOpacity(0.10),
-                        borderRadius:
-                            BorderRadius.circular(AppDimensions.radiusFull),
+              // ── Info + botones ───────────────────────────────────────
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Nombre
+                      Text(
+                        fav.nombre,
+                        style: textTheme.titleMedium,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      child: Text(
-                        hasStock ? 'Disponible' : 'Sin stock',
-                        style: TextStyle(
-                          fontFamily: AppTextStyles.fontFamily,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
+                      const SizedBox(height: 5),
+
+                      // Badge disponibilidad
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
                           color: hasStock
-                              ? AppColors.success
-                              : AppColors.error,
+                              ? AppColors.success.withOpacity(0.12)
+                              : AppColors.error.withOpacity(0.10),
+                          borderRadius:
+                              BorderRadius.circular(AppDimensions.radiusFull),
+                        ),
+                        child: Text(
+                          hasStock ? 'Disponible' : 'Sin stock',
+                          style: TextStyle(
+                            fontFamily: AppTextStyles.fontFamily,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: hasStock
+                                ? AppColors.success
+                                : AppColors.error,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
+                      const SizedBox(height: 8),
 
-                    // Precio
-                    Text(Formatters.precio(fav.precio),
-                        style: AppTextStyles.priceStyle),
+                      // Precio
+                      Text(Formatters.precio(fav.precio),
+                          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
 
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-                    // Botones
-                    Row(
-                      children: [
-                        // Agregar al carrito
-                        Expanded(
-                          child: SizedBox(
+                      // Botones
+                      Row(
+                        children: [
+                          // Agregar al carrito
+                          Expanded(
+                            child: SizedBox(
+                              height: 36,
+                              child: ElevatedButton.icon(
+                                onPressed: hasStock && !_addingToCart
+                                    ? _handleAddToCart
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        AppDimensions.radiusM),
+                                  ),
+                                ),
+                                icon: _addingToCart
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white))
+                                    : const Icon(
+                                        Icons.shopping_cart_outlined,
+                                        size: 15),
+                                label: Text(
+                                  hasStock ? 'Agregar' : 'Sin stock',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+
+                          // Quitar de favoritos
+                          SizedBox(
                             height: 36,
-                            child: ElevatedButton.icon(
-                              onPressed: hasStock && !_addingToCart
-                                  ? _handleAddToCart
-                                  : null,
-                              style: ElevatedButton.styleFrom(
-                                padding: EdgeInsets.zero,
+                            width: 36,
+                            child: IconButton.outlined(
+                              padding: EdgeInsets.zero,
+                              onPressed: widget.onRemove,
+                              style: IconButton.styleFrom(
+                                side: const BorderSide(
+                                    color: AppColors.error, width: 1.2),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(
                                       AppDimensions.radiusM),
                                 ),
                               ),
-                              icon: _addingToCart
-                                  ? const SizedBox(
-                                      width: 14,
-                                      height: 14,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white))
-                                  : const Icon(
-                                      Icons.shopping_cart_outlined,
-                                      size: 15),
-                              label: Text(
-                                hasStock ? 'Agregar' : 'Sin stock',
-                                style: const TextStyle(fontSize: 12),
-                              ),
+                              icon: const Icon(Icons.favorite_rounded,
+                                  color: AppColors.error, size: 17),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-
-                        // Quitar de favoritos
-                        SizedBox(
-                          height: 36,
-                          width: 36,
-                          child: IconButton.outlined(
-                            padding: EdgeInsets.zero,
-                            onPressed: widget.onRemove,
-                            style: IconButton.styleFrom(
-                              side: const BorderSide(
-                                  color: AppColors.error, width: 1.2),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                    AppDimensions.radiusM),
-                              ),
-                            ),
-                            icon: const Icon(Icons.favorite_rounded,
-                                color: AppColors.error, size: 17),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

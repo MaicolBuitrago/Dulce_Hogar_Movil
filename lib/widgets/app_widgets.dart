@@ -18,19 +18,20 @@ class DulceHogarLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Imagen del logo desde assets ──────────────────────────
         Container(
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(size * 0.22),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF22C55E).withOpacity(0.18),
+                color: colorScheme.primary.withOpacity(0.18),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -48,7 +49,7 @@ class DulceHogarLogo extends StatelessWidget {
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: size * 0.38,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF4A7FB5),
+                    color: colorScheme.secondary,
                   ),
                 ),
               ),
@@ -67,7 +68,7 @@ class DulceHogarLogo extends StatelessWidget {
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: size * 0.32,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF4A7FB5),
+                  color: colorScheme.secondary,
                   height: 1.2,
                 ),
               ),
@@ -77,7 +78,7 @@ class DulceHogarLogo extends StatelessWidget {
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: size * 0.22,
                   fontWeight: FontWeight.w400,
-                  color: const Color(0xFF94A3B8),
+                  color: colorScheme.onSurfaceVariant,
                   height: 1.2,
                 ),
               ),
@@ -106,17 +107,20 @@ class AppSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 48,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colorScheme.outline),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.06),
+              color: colorScheme.primary.withOpacity(0.06),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -125,16 +129,16 @@ class AppSearchBar extends StatelessWidget {
         child: Row(
           children: [
             const SizedBox(width: AppDimensions.paddingM),
-            const Icon(
+            Icon(
               Icons.search_rounded,
-              color: AppColors.textHint,
+              color: colorScheme.onSurfaceVariant,
               size: AppDimensions.iconM,
             ),
             const SizedBox(width: AppDimensions.paddingS),
             Expanded(
               child: TextField(
                 onChanged: onChanged,
-                style: AppTextStyles.bodyMedium,
+                style: textTheme.bodyMedium,
                 decoration: InputDecoration(
                   hintText: hint,
                   border: InputBorder.none,
@@ -142,8 +146,7 @@ class AppSearchBar extends StatelessWidget {
                   focusedBorder: InputBorder.none,
                   filled: false,
                   contentPadding: EdgeInsets.zero,
-                  hintStyle: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.textHint),
+                  hintStyle: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
               ),
             ),
@@ -171,6 +174,9 @@ class CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -180,16 +186,16 @@ class CategoryChip extends StatelessWidget {
           vertical: AppDimensions.paddingS,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.surface,
+          color: isSelected ? colorScheme.primary : colorScheme.surface,
           borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? colorScheme.primary : colorScheme.outline,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.25),
+                    color: colorScheme.primary.withOpacity(0.25),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -198,9 +204,9 @@ class CategoryChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: AppTextStyles.bodySmall.copyWith(
+          style: textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : AppColors.textSecondary,
+            color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -249,16 +255,19 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final sinStock = stock <= 0;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.08),
+              color: colorScheme.primary.withOpacity(0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -288,23 +297,23 @@ class ProductCard extends StatelessWidget {
                         imageUrl,
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => Container(
-                          color: AppColors.surfaceVariant,
-                          child: const Center(
+                          color: colorScheme.surfaceVariant,
+                          child: Center(
                             child: Icon(Icons.image_outlined,
-                                color: AppColors.textHint, size: 40),
+                                color: colorScheme.onSurfaceVariant, size: 40),
                           ),
                         ),
                         loadingBuilder: (_, child, loading) {
                           if (loading == null) return child;
                           return Container(
-                            color: AppColors.surfaceVariant,
+                            color: colorScheme.surfaceVariant,
                             child: Center(
                               child: CircularProgressIndicator(
                                 value: loading.expectedTotalBytes != null
                                     ? loading.cumulativeBytesLoaded /
                                         loading.expectedTotalBytes!
                                     : null,
-                                color: AppColors.primary,
+                                color: colorScheme.primary,
                                 strokeWidth: 2,
                               ),
                             ),
@@ -312,7 +321,6 @@ class ProductCard extends StatelessWidget {
                         },
                       ),
                     ),
-                    // Overlay sin existencia
                     if (sinStock)
                       Positioned.fill(
                         child: Container(
@@ -339,7 +347,6 @@ class ProductCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                    // Badge
                     if ((badge != null || isNew) && !sinStock)
                       Positioned(
                         top: AppDimensions.paddingS,
@@ -348,7 +355,7 @@ class ProductCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: isNew ? AppColors.secondary : AppColors.error,
+                            color: isNew ? colorScheme.secondary : colorScheme.error,
                             borderRadius:
                                 BorderRadius.circular(AppDimensions.radiusFull),
                           ),
@@ -363,7 +370,6 @@ class ProductCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                    // Favorito
                     Positioned(
                       top: AppDimensions.paddingS,
                       right: AppDimensions.paddingS,
@@ -374,8 +380,8 @@ class ProductCard extends StatelessWidget {
                           height: 32,
                           decoration: BoxDecoration(
                             color: isFavorite
-                                ? AppColors.error.withOpacity(0.12)
-                                : AppColors.surface.withOpacity(0.9),
+                                ? colorScheme.error.withOpacity(0.12)
+                                : colorScheme.surface.withOpacity(0.9),
                             shape: BoxShape.circle,
                           ),
                           child: AnimatedSwitcher(
@@ -385,7 +391,7 @@ class ProductCard extends StatelessWidget {
                               isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                               key: ValueKey(isFavorite),
                               size: 18,
-                              color: AppColors.error,
+                              color: colorScheme.error,
                             ),
                           ),
                         ),
@@ -395,7 +401,6 @@ class ProductCard extends StatelessWidget {
                 ),
               ),
             ),
-            // Info
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
               child: Column(
@@ -404,8 +409,8 @@ class ProductCard extends StatelessWidget {
                 children: [
                   Text(
                     name,
-                    style: AppTextStyles.titleMedium.copyWith(
-                      color: sinStock ? AppColors.textHint : AppColors.textPrimary,
+                    style: textTheme.titleMedium?.copyWith(
+                      color: sinStock ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -414,9 +419,9 @@ class ProductCard extends StatelessWidget {
                   if (originalPrice != null) ...[
                     Text(
                       _formatPrice(originalPrice!),
-                      style: AppTextStyles.bodySmall.copyWith(
+                      style: textTheme.bodySmall?.copyWith(
                         decoration: TextDecoration.lineThrough,
-                        color: AppColors.textHint,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -426,8 +431,9 @@ class ProductCard extends StatelessWidget {
                       Flexible(
                         child: Text(
                           _formatPrice(price),
-                          style: AppTextStyles.priceStyle.copyWith(
-                            color: sinStock ? AppColors.textHint : AppColors.priceColor,
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: sinStock ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -439,12 +445,12 @@ class ProductCard extends StatelessWidget {
                           width: 30,
                           height: 30,
                           decoration: BoxDecoration(
-                            color: sinStock ? AppColors.border : AppColors.primary,
+                            color: sinStock ? colorScheme.outline : colorScheme.primary,
                             borderRadius: BorderRadius.circular(AppDimensions.radiusS),
                           ),
                           child: Icon(
                             sinStock ? Icons.remove_rounded : Icons.add_rounded,
-                            color: sinStock ? AppColors.textHint : Colors.white,
+                            color: sinStock ? colorScheme.onSurfaceVariant : Colors.white,
                             size: 18,
                           ),
                         ),
@@ -476,14 +482,17 @@ class GoogleSignInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: AppDimensions.buttonHeight,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-          border: Border.all(color: AppColors.border, width: 1.5),
+          border: Border.all(color: colorScheme.outline, width: 1.5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.06),
@@ -495,7 +504,6 @@ class GoogleSignInButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Google "G" icon simulado
             Container(
               width: 24,
               height: 24,
@@ -515,8 +523,7 @@ class GoogleSignInButton extends StatelessWidget {
             const SizedBox(width: AppDimensions.paddingS),
             Text(
               label,
-              style: AppTextStyles.titleMedium
-                  .copyWith(color: AppColors.textPrimary),
+              style: textTheme.titleMedium?.copyWith(color: colorScheme.onSurface),
             ),
           ],
         ),
@@ -542,9 +549,12 @@ class QuantitySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: colorScheme.surfaceVariant,
         borderRadius: BorderRadius.circular(AppDimensions.radiusS),
       ),
       child: Row(
@@ -558,7 +568,7 @@ class QuantitySelector extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
               quantity.toString(),
-              style: AppTextStyles.titleMedium,
+              style: textTheme.titleMedium,
             ),
           ),
           _QtyButton(
@@ -585,19 +595,21 @@ class _QtyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: isPrimary ? AppColors.primary : Colors.transparent,
+          color: isPrimary ? colorScheme.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(AppDimensions.radiusS),
         ),
         child: Icon(
           icon,
           size: 18,
-          color: isPrimary ? Colors.white : AppColors.textSecondary,
+          color: isPrimary ? Colors.white : colorScheme.onSurfaceVariant,
         ),
       ),
     );
@@ -621,17 +633,20 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: AppTextStyles.headlineMedium),
+        Text(title, style: textTheme.headlineMedium),
         if (actionLabel != null)
           GestureDetector(
             onTap: onAction,
             child: Text(
               actionLabel!,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.primary,
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.primary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -651,17 +666,20 @@ class DividerWithText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Row(
       children: [
-        const Expanded(child: Divider(color: AppColors.border)),
+        Expanded(child: Divider(color: colorScheme.outline)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM),
           child: Text(
             text,
-            style: AppTextStyles.bodySmall,
+            style: textTheme.bodySmall,
           ),
         ),
-        const Expanded(child: Divider(color: AppColors.border)),
+        Expanded(child: Divider(color: colorScheme.outline)),
       ],
     );
   }
@@ -684,10 +702,12 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        boxShadow: const [
           BoxShadow(
             color: Color(0x1A000000),
             blurRadius: 16,
@@ -751,6 +771,8 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -767,7 +789,7 @@ class _NavItem extends StatelessWidget {
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.primary.withOpacity(0.12)
+                        ? colorScheme.primary.withOpacity(0.12)
                         : Colors.transparent,
                     borderRadius:
                         BorderRadius.circular(AppDimensions.radiusM),
@@ -775,8 +797,8 @@ class _NavItem extends StatelessWidget {
                   child: Icon(
                     icon,
                     color: isSelected
-                        ? AppColors.navSelected
-                        : AppColors.navUnselected,
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
                     size: AppDimensions.iconM,
                   ),
                 ),
@@ -786,8 +808,8 @@ class _NavItem extends StatelessWidget {
                     top: -2,
                     child: Container(
                       padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
-                        color: AppColors.error,
+                      decoration: BoxDecoration(
+                        color: colorScheme.error,
                         shape: BoxShape.circle,
                       ),
                       child: Text(
@@ -811,8 +833,8 @@ class _NavItem extends StatelessWidget {
                 fontWeight:
                     isSelected ? FontWeight.w700 : FontWeight.w400,
                 color: isSelected
-                    ? AppColors.navSelected
-                    : AppColors.navUnselected,
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -821,9 +843,9 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
+
 // ──────────────────────────────────────────────────────────────
-// SharedBottomNav — bottom nav listo para usar en cualquier pantalla
-// Detecta la ruta actual para marcar el tab correcto
+// SharedBottomNav
 // ──────────────────────────────────────────────────────────────
 class SharedBottomNav extends StatelessWidget {
   const SharedBottomNav({super.key});
@@ -841,10 +863,9 @@ class SharedBottomNav extends StatelessWidget {
     final target = routes[index];
     final current = ModalRoute.of(context)?.settings.name ?? '';
 
-    if (current == target) return; // ya estamos aquí
+    if (current == target) return;
 
     if (index == 0) {
-      // Inicio: limpiar el stack entero y volver al home
       Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
     } else {
       Navigator.of(context).pushNamed(target);

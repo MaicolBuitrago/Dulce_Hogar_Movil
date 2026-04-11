@@ -1,4 +1,3 @@
-// src/routes/router.js
 // ─────────────────────────────────────────────────────────────
 // Router principal — solo monta los sub-routers por dominio
 // ─────────────────────────────────────────────────────────────
@@ -8,7 +7,8 @@ import productoRoutes  from "./productoRoutes.js";
 import categoriaRoutes from "./categoriaRoutes.js";
 import carritoRoutes   from "./carritoRoutes.js";
 import favoritosRoutes from "./favoritosRoutes.js";
-import pedidoRoutes    from "./pedidoRoutes.js";
+import pedidoRoutes      from "./pedidoRoutes.js";
+import misPedidosRoutes  from "./misPedidosRoutes.js";
 import direccionRoutes from "./direccionRoutes.js";
 
 const router = express.Router();
@@ -40,7 +40,10 @@ router.use("/direcciones",     direccionRoutes);
 
 // ── Pedidos (admin) ───────────────────────────────────────────
 router.use("/admin/pedidos",   pedidoRoutes);
-router.use("/estadisticas",    pedidoRoutes); 
+router.use("/estadisticas",    pedidoRoutes);
+
+// ── Pedidos (cliente) ─────────────────────────────────────────
+router.use("/pedidos/mis-pedidos", misPedidosRoutes);
 
 // ── Refresh token ─────────────────────────────────────────────
 router.post("/refresh", (req, res, next) => usuarioRoutes(req, res, next));

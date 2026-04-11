@@ -111,12 +111,14 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: colorScheme.background,
       body: Stack(
         children: [
           // Decoración de fondo — manchas de color suaves
-          // Círculo verde arriba derecha
           Positioned(
             top: -60,
             right: -60,
@@ -133,7 +135,6 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
             ),
           ),
-          // Círculo azul abajo izquierda
           Positioned(
             bottom: 80,
             left: -80,
@@ -150,7 +151,6 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
             ),
           ),
-          // Círculo amarillo extra — toque de acento
           Positioned(
             top: 200,
             right: -40,
@@ -183,15 +183,15 @@ class _RegisterScreenState extends State<RegisterScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildHeadline(),
+                            _buildHeadline(context),
                             const SizedBox(height: 28),
-                            _buildCard(),
+                            _buildCard(context),
                             const SizedBox(height: 20),
-                            _buildTermsRow(),
+                            _buildTermsRow(context),
                             const SizedBox(height: 24),
-                            _buildSubmitButton(),
+                            _buildSubmitButton(context),
                             const SizedBox(height: 20),
-                            _buildLoginLink(),
+                            _buildLoginLink(context),
                             const SizedBox(height: 16),
                           ],
                         ),
@@ -207,399 +207,426 @@ class _RegisterScreenState extends State<RegisterScreen>
     );
   }
 
-  // ─── Top bar ──────────────────────────────────────────────────────────────
-  Widget _buildTopBar(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-    child: Row(
-      children: [
-        GestureDetector(
-          onTap: () => Navigator.of(context).maybePop(),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: AppColors.textPrimary, size: 17),
-          ),
-        ),
-        const Spacer(),
-        // Paso indicador sutil
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-          decoration: BoxDecoration(
-            color: AppColors.primaryPale,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            'Paso 1 de 1',
-            style: TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryDark,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-
-  // ─── Headline ─────────────────────────────────────────────────────────────
-  Widget _buildHeadline() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Crea tu\ncuenta',
-        style: TextStyle(
-          fontFamily: 'Nunito',
-          fontSize: 34,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
-          height: 1.1,
-          letterSpacing: -1,
-        ),
-      ),
-      const SizedBox(height: 6),
-      const Text(
-        'Completa los datos para empezar a comprar',
-        style: TextStyle(
-          fontFamily: 'Nunito',
-          fontSize: 14,
-          color: AppColors.textSecondary,
-        ),
-      ),
-    ],
-  );
-
-  // ─── Card principal ────────────────────────────────────────────────────────
-  Widget _buildCard() => Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(24),
-      boxShadow: [
-        BoxShadow(color: const Color(0xFF22C55E).withOpacity(0.06), blurRadius: 24, offset: const Offset(0, 8)),
-        BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
-      ],
-    ),
-    child: Column(
-      children: [
-        // Sección: Información personal
-        _buildSection(
-          icon: Icons.person_rounded,
-          iconColor: AppColors.secondary,
-          iconBg: AppColors.secondaryLight,
-          label: 'Información personal',
-          children: [
-            _buildField('Cédula', 'Número de identificación', Icons.badge_outlined,
-                _cedulaController, TextInputType.number),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(child: _buildField('Nombre', 'Tu nombre',
-                    Icons.person_outline_rounded, _nombreController, TextInputType.name)),
-                const SizedBox(width: 12),
-                Expanded(child: _buildField('Apellido', 'Tu apellido',
-                    Icons.person_outline_rounded, _apellidoController, TextInputType.name)),
-              ],
-            ),
-            const SizedBox(height: 14),
-            _buildField('Correo electrónico', 'ejemplo@correo.com',
-                Icons.alternate_email_rounded, _emailController, TextInputType.emailAddress),
-          ],
-        ),
-
-        Divider(height: 1, color: AppColors.border.withOpacity(0.6)),
-
-        // Sección: Seguridad
-        _buildSection(
-          icon: Icons.shield_outlined,
-          iconColor: AppColors.primaryDark,
-          iconBg: AppColors.primaryPale,
-          label: 'Seguridad',
-          children: [
-            _buildPasswordField(
-              label: 'Contraseña',
-              hint: 'Mínimo 6 caracteres',
-              controller: _passwordController,
-              obscure: _obscurePassword,
-              onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
-            ),
-            const SizedBox(height: 14),
-            _buildPasswordField(
-              label: 'Confirmar contraseña',
-              hint: 'Repite tu contraseña',
-              controller: _confirmController,
-              obscure: _obscureConfirm,
-              onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-
-  Widget _buildSection({
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-    required String label,
-    required List<Widget> children,
-  }) => Padding(
-    padding: const EdgeInsets.all(20),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 32, height: 32,
-              decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(9)),
-              child: Icon(icon, size: 16, color: iconColor),
-            ),
-            const SizedBox(width: 10),
-            Text(label, style: const TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.3,
-            )),
-          ],
-        ),
-        const SizedBox(height: 16),
-        ...children,
-      ],
-    ),
-  );
-
-  // ─── Campo genérico ────────────────────────────────────────────────────────
-  Widget _buildField(String label, String hint, IconData icon,
-      TextEditingController ctrl, TextInputType type) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: const TextStyle(
-        fontFamily: 'Nunito', fontSize: 12, fontWeight: FontWeight.w600,
-        color: AppColors.textSecondary,
-      )),
-      const SizedBox(height: 6),
-      TextField(
-        controller: ctrl,
-        keyboardType: type,
-        textCapitalization: type == TextInputType.name
-            ? TextCapitalization.words
-            : TextCapitalization.none,
-        style: const TextStyle(
-          fontFamily: 'Nunito', fontSize: 14,
-          fontWeight: FontWeight.w500, color: AppColors.textPrimary,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(
-            fontFamily: 'Nunito', fontSize: 13, color: AppColors.textHint,
-          ),
-          prefixIcon: Icon(icon, color: AppColors.textHint, size: 17),
-          filled: true,
-          fillColor: const Color(0xFFF8FAFC),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
-          ),
-        ),
-      ),
-    ],
-  );
-
-  // ─── Campo contraseña ──────────────────────────────────────────────────────
-  Widget _buildPasswordField({
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-    required bool obscure,
-    required VoidCallback onToggle,
-  }) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: const TextStyle(
-        fontFamily: 'Nunito', fontSize: 12, fontWeight: FontWeight.w600,
-        color: AppColors.textSecondary,
-      )),
-      const SizedBox(height: 6),
-      TextField(
-        controller: controller,
-        obscureText: obscure,
-        style: const TextStyle(
-          fontFamily: 'Nunito', fontSize: 14,
-          fontWeight: FontWeight.w500, color: AppColors.textPrimary,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(
-            fontFamily: 'Nunito', fontSize: 13, color: AppColors.textHint,
-          ),
-          prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.textHint, size: 17),
-          suffixIcon: GestureDetector(
-            onTap: onToggle,
-            child: Icon(
-              obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-              color: AppColors.textHint, size: 17,
-            ),
-          ),
-          filled: true,
-          fillColor: const Color(0xFFF8FAFC),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
-          ),
-        ),
-      ),
-    ],
-  );
-
-  // ─── Términos ──────────────────────────────────────────────────────────────
-  Widget _buildTermsRow() => GestureDetector(
-    onTap: () => setState(() => _acceptTerms = !_acceptTerms),
-    behavior: HitTestBehavior.opaque,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: _acceptTerms ? AppColors.primaryPale : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _acceptTerms ? AppColors.primaryBorder : AppColors.border,
-          width: 1.5,
-        ),
-      ),
+  Widget _buildTopBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Row(
         children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            width: 22, height: 22,
-            decoration: BoxDecoration(
-              color: _acceptTerms ? AppColors.primary : Colors.transparent,
-              border: Border.all(
-                color: _acceptTerms ? AppColors.primary : AppColors.border,
-                width: 1.8,
+          GestureDetector(
+            onTap: () => Navigator.of(context).maybePop(),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: colorScheme.outline),
               ),
-              borderRadius: BorderRadius.circular(6),
+              child: Icon(Icons.arrow_back_ios_new_rounded,
+                  color: colorScheme.onSurface, size: 17),
             ),
-            child: _acceptTerms
-                ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
-                : null,
           ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Text.rich(
-              TextSpan(
-                style: TextStyle(
-                  fontFamily: 'Nunito', fontSize: 13, color: AppColors.textSecondary,
-                ),
-                children: [
-                  TextSpan(text: 'Acepto los '),
-                  TextSpan(
-                    text: 'Términos y Condiciones',
-                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
-                  ),
-                  TextSpan(text: ' y la '),
-                  TextSpan(
-                    text: 'Política de Privacidad',
-                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
-                  ),
-                ],
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.primaryPale,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Paso 1 de 1',
+              style: TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primaryDark,
               ),
             ),
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 
-  // ─── Botón principal ───────────────────────────────────────────────────────
-  Widget _buildSubmitButton() => AnimatedOpacity(
-    opacity: _acceptTerms ? 1.0 : 0.45,
-    duration: const Duration(milliseconds: 200),
-    child: GestureDetector(
-      onTap: (_acceptTerms && !_loading) ? _register : null,
-      child: Container(
-        height: 54,
-        decoration: BoxDecoration(
-          gradient: _acceptTerms
-              ? const LinearGradient(
-                  colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                )
-              : LinearGradient(colors: [AppColors.border, AppColors.border]),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: _acceptTerms
-              ? [BoxShadow(
-                  color: AppColors.primary.withOpacity(0.35),
-                  blurRadius: 16, offset: const Offset(0, 6))]
-              : [],
+  Widget _buildHeadline(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Crea tu\ncuenta',
+          style: TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 34,
+            fontWeight: FontWeight.w800,
+            color: colorScheme.onSurface,
+            height: 1.1,
+            letterSpacing: -1,
+          ),
         ),
-        child: Center(
-          child: _loading
-              ? const SizedBox(
-                  width: 22, height: 22,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Text('Crear cuenta', style: TextStyle(
-                      fontFamily: 'Nunito', fontSize: 15,
-                      fontWeight: FontWeight.w700, color: Colors.white,
-                      letterSpacing: 0.3,
-                    )),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+        const SizedBox(height: 6),
+        Text(
+          'Completa los datos para empezar a comprar',
+          style: TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 14,
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCard(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF22C55E).withOpacity(0.06), blurRadius: 24, offset: const Offset(0, 8)),
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildSection(
+            context,
+            icon: Icons.person_rounded,
+            iconColor: AppColors.secondary,
+            iconBg: AppColors.secondaryLight,
+            label: 'Información personal',
+            children: [
+              _buildField(context, 'Cédula', 'Número de identificación', Icons.badge_outlined,
+                  _cedulaController, TextInputType.number),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(child: _buildField(context, 'Nombre', 'Tu nombre',
+                      Icons.person_outline_rounded, _nombreController, TextInputType.name)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildField(context, 'Apellido', 'Tu apellido',
+                      Icons.person_outline_rounded, _apellidoController, TextInputType.name)),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _buildField(context, 'Correo electrónico', 'ejemplo@correo.com',
+                  Icons.alternate_email_rounded, _emailController, TextInputType.emailAddress),
+            ],
+          ),
+
+          Divider(height: 1, color: colorScheme.outline.withOpacity(0.6)),
+
+          _buildSection(
+            context,
+            icon: Icons.shield_outlined,
+            iconColor: AppColors.primaryDark,
+            iconBg: AppColors.primaryPale,
+            label: 'Seguridad',
+            children: [
+              _buildPasswordField(context,
+                label: 'Contraseña',
+                hint: 'Mínimo 6 caracteres',
+                controller: _passwordController,
+                obscure: _obscurePassword,
+                onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+              ),
+              const SizedBox(height: 14),
+              _buildPasswordField(context,
+                label: 'Confirmar contraseña',
+                hint: 'Repite tu contraseña',
+                controller: _confirmController,
+                obscure: _obscureConfirm,
+                onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSection(BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String label,
+    required List<Widget> children,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(9)),
+                child: Icon(icon, size: 16, color: iconColor),
+              ),
+              const SizedBox(width: 10),
+              Text(label, style: TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: colorScheme.onSurfaceVariant,
+                letterSpacing: 0.3,
+              )),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildField(BuildContext context, String label, String hint, IconData icon,
+      TextEditingController ctrl, TextInputType type) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(
+          fontFamily: 'Nunito', fontSize: 12, fontWeight: FontWeight.w600,
+          color: colorScheme.onSurfaceVariant,
+        )),
+        const SizedBox(height: 6),
+        TextField(
+          controller: ctrl,
+          keyboardType: type,
+          textCapitalization: type == TextInputType.name
+              ? TextCapitalization.words
+              : TextCapitalization.none,
+          style: TextStyle(
+            fontFamily: 'Nunito', fontSize: 14,
+            fontWeight: FontWeight.w500, color: colorScheme.onSurface,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              fontFamily: 'Nunito', fontSize: 13, color: colorScheme.onSurfaceVariant,
+            ),
+            prefixIcon: Icon(icon, color: colorScheme.onSurfaceVariant, size: 17),
+            filled: true,
+            fillColor: colorScheme.surfaceVariant,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: colorScheme.outline),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: colorScheme.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField(BuildContext context, {
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required bool obscure,
+    required VoidCallback onToggle,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(
+          fontFamily: 'Nunito', fontSize: 12, fontWeight: FontWeight.w600,
+          color: colorScheme.onSurfaceVariant,
+        )),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          obscureText: obscure,
+          style: TextStyle(
+            fontFamily: 'Nunito', fontSize: 14,
+            fontWeight: FontWeight.w500, color: colorScheme.onSurface,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              fontFamily: 'Nunito', fontSize: 13, color: colorScheme.onSurfaceVariant,
+            ),
+            prefixIcon: Icon(Icons.lock_outline_rounded, color: colorScheme.onSurfaceVariant, size: 17),
+            suffixIcon: GestureDetector(
+              onTap: onToggle,
+              child: Icon(
+                obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                color: colorScheme.onSurfaceVariant, size: 17,
+              ),
+            ),
+            filled: true,
+            fillColor: colorScheme.surfaceVariant,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: colorScheme.outline),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: colorScheme.outline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTermsRow(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return GestureDetector(
+      onTap: () => setState(() => _acceptTerms = !_acceptTerms),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: _acceptTerms ? AppColors.primaryPale : colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: _acceptTerms ? AppColors.primaryBorder : colorScheme.outline,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              width: 22, height: 22,
+              decoration: BoxDecoration(
+                color: _acceptTerms ? AppColors.primary : Colors.transparent,
+                border: Border.all(
+                  color: _acceptTerms ? AppColors.primary : colorScheme.outline,
+                  width: 1.8,
+                ),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: _acceptTerms
+                  ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  style: TextStyle(
+                    fontFamily: 'Nunito', fontSize: 13, color: colorScheme.onSurfaceVariant,
+                  ),
+                  children: [
+                    const TextSpan(text: 'Acepto los '),
+                    TextSpan(
+                      text: 'Términos y Condiciones',
+                      style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+                    ),
+                    const TextSpan(text: ' y la '),
+                    TextSpan(
+                      text: 'Política de Privacidad',
+                      style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+                    ),
                   ],
                 ),
-        ),
-      ),
-    ),
-  );
-
-  // ─── Link login ────────────────────────────────────────────────────────────
-  Widget _buildLoginLink() => Center(
-    child: GestureDetector(
-      onTap: () => Navigator.of(context).pop(),
-      child: Text.rich(
-        const TextSpan(
-          style: TextStyle(fontFamily: 'Nunito', fontSize: 13, color: AppColors.textSecondary),
-          children: [
-            TextSpan(text: '¿Ya tienes cuenta?  '),
-            TextSpan(
-              text: 'Inicia sesión',
-              style: TextStyle(
-                color: AppColors.primary, fontWeight: FontWeight.w700,
               ),
             ),
           ],
         ),
-        textAlign: TextAlign.center,
       ),
-    ),
-  );
+    );
+  }
+
+  Widget _buildSubmitButton(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return AnimatedOpacity(
+      opacity: _acceptTerms ? 1.0 : 0.45,
+      duration: const Duration(milliseconds: 200),
+      child: GestureDetector(
+        onTap: (_acceptTerms && !_loading) ? _register : null,
+        child: Container(
+          height: 54,
+          decoration: BoxDecoration(
+            gradient: _acceptTerms
+                ? const LinearGradient(
+                    colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  )
+                : LinearGradient(colors: [colorScheme.outline, colorScheme.outline]),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: _acceptTerms
+                ? [BoxShadow(
+                    color: AppColors.primary.withOpacity(0.35),
+                    blurRadius: 16, offset: const Offset(0, 6))]
+                : [],
+          ),
+          child: Center(
+            child: _loading
+                ? const SizedBox(
+                    width: 22, height: 22,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.2))
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text('Crear cuenta', style: TextStyle(
+                        fontFamily: 'Nunito', fontSize: 15,
+                        fontWeight: FontWeight.w700, color: Colors.white,
+                        letterSpacing: 0.3,
+                      )),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginLink(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Center(
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).pop(),
+        child: Text.rich(
+          TextSpan(
+            style: TextStyle(fontFamily: 'Nunito', fontSize: 13, color: colorScheme.onSurfaceVariant),
+            children: [
+              const TextSpan(text: '¿Ya tienes cuenta?  '),
+              TextSpan(
+                text: 'Inicia sesión',
+                style: TextStyle(
+                  color: AppColors.primary, fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
 }

@@ -17,7 +17,7 @@ class _RecuperarContrasenaScreenState
   final _emailFocus      = FocusNode();
 
   bool    _loading       = false;
-  bool    _enviado       = false;   // muestra el estado de éxito
+  bool    _enviado       = false;
   bool    _emailError    = false;
   String? _errorMsg;
 
@@ -28,7 +28,6 @@ class _RecuperarContrasenaScreenState
     super.dispose();
   }
 
-  // ─── Validación igual que login ───────────────────────────────────────────
   bool _esCorreoValido(String email) {
     final regex = RegExp(
       r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.(com|co|net|org|edu|gov|io|info|biz|[a-z]{2,})$',
@@ -37,7 +36,6 @@ class _RecuperarContrasenaScreenState
     return regex.hasMatch(email.trim());
   }
 
-  // ─── SnackBar ─────────────────────────────────────────────────────────────
   void _snack(String msg, {required bool error}) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -75,7 +73,6 @@ class _RecuperarContrasenaScreenState
       );
   }
 
-  // ─── Enviar solicitud → POST /api/auth/recuperar ──────────────────────────
   Future<void> _enviar() async {
     final email = _emailController.text.trim();
 
@@ -110,7 +107,6 @@ class _RecuperarContrasenaScreenState
 
     setState(() => _loading = true);
 
-    // Llama AuthService → POST /api/auth/recuperar (Brevo envía el correo)
     final result = await AuthService.recuperarContrasena(email);
 
     if (!mounted) return;
@@ -134,17 +130,19 @@ class _RecuperarContrasenaScreenState
     }
   }
 
-  // ─── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: colorScheme.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textPrimary, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: colorScheme.onSurface, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -159,7 +157,6 @@ class _RecuperarContrasenaScreenState
               children: [
                 const SizedBox(height: AppDimensions.paddingM),
 
-                // ── Ícono grande ───────────────────────────────────────────
                 Container(
                   width: 80,
                   height: 80,
@@ -173,27 +170,25 @@ class _RecuperarContrasenaScreenState
 
                 const SizedBox(height: AppDimensions.paddingM),
 
-                const Text(
+                Text(
                   'Recuperar contraseña',
-                  style: AppTextStyles.displayMedium,
+                  style: textTheme.displayMedium,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'Te enviaremos un enlace a tu correo\npara restablecer tu contraseña.',
-                  style: AppTextStyles.bodyMedium
-                      .copyWith(color: AppColors.textSecondary),
+                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),
 
                 const SizedBox(height: AppDimensions.paddingXL),
 
-                // ── Card ───────────────────────────────────────────────────
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(AppDimensions.paddingL),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: colorScheme.surface,
                     borderRadius:
                         BorderRadius.circular(AppDimensions.radiusXL),
                     boxShadow: [
@@ -205,8 +200,8 @@ class _RecuperarContrasenaScreenState
                     ],
                   ),
                   child: _enviado
-                      ? _buildExitoContent()
-                      : _buildFormContent(),
+                      ? _buildExitoContent(context)
+                      : _buildFormContent(context),
                 ),
 
                 const SizedBox(height: AppDimensions.paddingXXL),
@@ -218,16 +213,17 @@ class _RecuperarContrasenaScreenState
     );
   }
 
-  // ─── Contenido del formulario ─────────────────────────────────────────────
-  Widget _buildFormContent() {
+  Widget _buildFormContent(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Campo correo
         Text(
           'Correo electrónico:',
-          style: AppTextStyles.bodyMedium.copyWith(
-              fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          style: textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600, color: colorScheme.onSurface),
         ),
         const SizedBox(height: 6),
         TextField(
@@ -235,7 +231,7 @@ class _RecuperarContrasenaScreenState
           focusNode: _emailFocus,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.done,
-          style: AppTextStyles.bodyMedium,
+          style: textTheme.bodyMedium,
           onChanged: (_) {
             if (_emailError)
               setState(() { _emailError = false; _errorMsg = null; });
@@ -245,13 +241,13 @@ class _RecuperarContrasenaScreenState
             hintText: 'usuario@correo.com',
             prefixIcon: Icon(
               Icons.email_outlined,
-              color: _emailError ? AppColors.error : AppColors.textHint,
+              color: _emailError ? AppColors.error : colorScheme.onSurfaceVariant,
               size: AppDimensions.iconS,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radiusM),
               borderSide: BorderSide(
-                  color: _emailError ? AppColors.error : AppColors.border,
+                  color: _emailError ? AppColors.error : colorScheme.outline,
                   width: _emailError ? 1.5 : 1),
             ),
             focusedBorder: OutlineInputBorder(
@@ -263,7 +259,6 @@ class _RecuperarContrasenaScreenState
           ),
         ),
 
-        // Mensaje de error bajo el campo
         AnimatedSize(
           duration: const Duration(milliseconds: 200),
           child: _emailError && _errorMsg != null
@@ -277,7 +272,7 @@ class _RecuperarContrasenaScreenState
                       Expanded(
                         child: Text(
                           _errorMsg!,
-                          style: AppTextStyles.bodySmall.copyWith(
+                          style: textTheme.bodySmall?.copyWith(
                               color: AppColors.error, fontSize: 11),
                         ),
                       ),
@@ -289,7 +284,6 @@ class _RecuperarContrasenaScreenState
 
         const SizedBox(height: AppDimensions.paddingL),
 
-        // Botón enviar
         ElevatedButton(
           onPressed: _loading ? null : _enviar,
           child: _loading
@@ -304,13 +298,12 @@ class _RecuperarContrasenaScreenState
 
         const SizedBox(height: AppDimensions.paddingM),
 
-        // Volver al login
         Center(
           child: GestureDetector(
             onTap: () => Navigator.of(context).pop(),
             child: Text(
               'Volver al inicio de sesión',
-              style: AppTextStyles.bodySmall.copyWith(
+              style: textTheme.bodySmall?.copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w700,
                 decoration: TextDecoration.underline,
@@ -322,13 +315,14 @@ class _RecuperarContrasenaScreenState
     );
   }
 
-  // ─── Contenido cuando se envió exitosamente ───────────────────────────────
-  Widget _buildExitoContent() {
+  Widget _buildExitoContent(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Column(
       children: [
         const SizedBox(height: AppDimensions.paddingM),
 
-        // Ícono éxito
         Container(
           width: 64,
           height: 64,
@@ -342,9 +336,9 @@ class _RecuperarContrasenaScreenState
 
         const SizedBox(height: AppDimensions.paddingM),
 
-        const Text(
+        Text(
           '¡Correo enviado!',
-          style: AppTextStyles.headlineMedium,
+          style: textTheme.headlineMedium,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
@@ -352,14 +346,13 @@ class _RecuperarContrasenaScreenState
         RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
-            style: AppTextStyles.bodySmall
-                .copyWith(color: AppColors.textSecondary, height: 1.5),
+            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, height: 1.5),
             children: [
               const TextSpan(
                   text: 'Enviamos un enlace de recuperación a\n'),
               TextSpan(
                 text: _emailController.text.trim(),
-                style: AppTextStyles.bodySmall.copyWith(
+                style: textTheme.bodySmall?.copyWith(
                     color: AppColors.primary, fontWeight: FontWeight.w700),
               ),
               const TextSpan(
@@ -371,7 +364,6 @@ class _RecuperarContrasenaScreenState
 
         const SizedBox(height: AppDimensions.paddingL),
 
-        // Info nota
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -388,7 +380,7 @@ class _RecuperarContrasenaScreenState
               Expanded(
                 child: Text(
                   'El enlace expira en 30 minutos.',
-                  style: AppTextStyles.bodySmall.copyWith(
+                  style: textTheme.bodySmall?.copyWith(
                       color: AppColors.secondaryDark,
                       fontWeight: FontWeight.w600),
                 ),
@@ -399,7 +391,6 @@ class _RecuperarContrasenaScreenState
 
         const SizedBox(height: AppDimensions.paddingL),
 
-        // Botón volver
         ElevatedButton(
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Volver al inicio de sesión'),
@@ -407,7 +398,6 @@ class _RecuperarContrasenaScreenState
 
         const SizedBox(height: AppDimensions.paddingM),
 
-        // Reenviar
         Center(
           child: GestureDetector(
             onTap: () => setState(() {
@@ -417,8 +407,8 @@ class _RecuperarContrasenaScreenState
             }),
             child: Text(
               '¿No llegó? Intentar con otro correo',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
                 decoration: TextDecoration.underline,
               ),
             ),

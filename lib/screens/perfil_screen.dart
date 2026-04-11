@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../services/auth_service.dart';
+import '../services/theme_service.dart';
 import '../widgets/app_widgets.dart';
 
 class PerfilScreen extends StatefulWidget {
@@ -59,29 +60,34 @@ class _PerfilScreenState extends State<PerfilScreen> {
   Future<void> _cerrarSesion() async {
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusXL)),
-        title: const Text('Cerrar sesión', style: AppTextStyles.headlineMedium),
-        content: Text(
-          '¿Estás seguro de que quieres cerrar sesión?',
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancelar',
-                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+      builder: (ctx) {
+        final colorScheme = Theme.of(ctx).colorScheme;
+        final textTheme = Theme.of(ctx).textTheme;
+        
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusXL)),
+          title: Text('Cerrar sesión', style: textTheme.headlineMedium),
+          content: Text(
+            '¿Estás seguro de que quieres cerrar sesión?',
+            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusM)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Cancelar',
+                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
             ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Cerrar sesión'),
-          ),
-        ],
-      ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.error,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusM)),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Cerrar sesión'),
+            ),
+          ],
+        );
+      },
     );
     if (confirmar != true || !mounted) return;
     await AuthService.logout();
@@ -91,8 +97,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.background,
       bottomNavigationBar: const SharedBottomNav(),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
@@ -104,11 +112,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     padding: const EdgeInsets.all(AppDimensions.paddingM),
                     child: Column(
                       children: [
-                        _buildInfoCard(),
+                        _buildInfoCard(context),
                         const SizedBox(height: AppDimensions.paddingM),
-                        _buildMenuCard(),
+                        _buildMenuCard(context),
                         const SizedBox(height: AppDimensions.paddingM),
-                        _buildLogoutButton(),
+                        _buildLogoutButton(context),
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -166,7 +174,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: 12),
-                      // Avatar con iniciales
                       Container(
                         width: 76, height: 76,
                         decoration: BoxDecoration(
@@ -217,12 +224,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildInfoCard(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppDimensions.paddingL),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 4)),
@@ -232,7 +242,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Información personal',
-              style: AppTextStyles.headlineMedium.copyWith(fontSize: 15)),
+              style: textTheme.headlineMedium?.copyWith(fontSize: 15)),
           const SizedBox(height: 14),
           _InfoRow(icon: Icons.badge_outlined, label: 'Cédula', value: _usuario?.cedula ?? '-'),
           const _Divider(),
@@ -246,11 +256,13 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  Widget _buildMenuCard() {
+  Widget _buildMenuCard(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 4)),
@@ -291,12 +303,25 @@ class _PerfilScreenState extends State<PerfilScreen> {
             subtitle: 'Ver productos en tu carrito',
             onTap: () => Navigator.of(context).pushNamed('/cart'),
           ),
+          const _MenuDivider(),
+          _MenuItem(
+            icon: Icons.receipt_long_outlined,
+            iconColor: AppColors.primary,
+            iconBg: AppColors.primaryPale,
+            label: 'Mis pedidos',
+            subtitle: 'Revisa el historial de tus compras',
+            onTap: () => Navigator.of(context).pushNamed('/mis-pedidos'),
+          ),
+          const _MenuDivider(),
+          const _ThemeToggleItem(),
         ],
       ),
     );
   }
 
-  Widget _buildLogoutButton() {
+  Widget _buildLogoutButton(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    
     return GestureDetector(
       onTap: _cerrarSesion,
       child: Container(
@@ -313,7 +338,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             const Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
             const SizedBox(width: 10),
             Text('Cerrar sesión',
-                style: AppTextStyles.bodyMedium.copyWith(
+                style: textTheme.bodyMedium?.copyWith(
                     color: AppColors.error, fontWeight: FontWeight.w700)),
           ],
         ),
@@ -332,6 +357,9 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -343,9 +371,9 @@ class _InfoRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.textHint, fontSize: 11)),
+                    style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 11)),
                 const SizedBox(height: 1),
-                Text(value, style: AppTextStyles.bodyMedium),
+                Text(value, style: textTheme.bodyMedium),
               ],
             ),
           ),
@@ -358,17 +386,105 @@ class _InfoRow extends StatelessWidget {
 class _Divider extends StatelessWidget {
   const _Divider();
   @override
-  Widget build(BuildContext context) =>
-      const Divider(color: AppColors.divider, height: 1, thickness: 1);
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Divider(color: colorScheme.outline, height: 1, thickness: 1);
+  }
 }
 
 class _MenuDivider extends StatelessWidget {
   const _MenuDivider();
   @override
-  Widget build(BuildContext context) => const Padding(
-        padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingL),
-        child: Divider(color: AppColors.divider, height: 1, thickness: 1),
-      );
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingL),
+      child: Divider(color: colorScheme.outline, height: 1, thickness: 1),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Toggle de modo oscuro — aparece en el menú de perfil
+// ──────────────────────────────────────────────────────────────────────────
+class _ThemeToggleItem extends StatefulWidget {
+  const _ThemeToggleItem();
+
+  @override
+  State<_ThemeToggleItem> createState() => _ThemeToggleItemState();
+}
+
+class _ThemeToggleItemState extends State<_ThemeToggleItem> {
+  @override
+  void initState() {
+    super.initState();
+    ThemeService.themeMode.addListener(_onThemeChange);
+  }
+
+  @override
+  void dispose() {
+    ThemeService.themeMode.removeListener(_onThemeChange);
+    super.dispose();
+  }
+
+  void _onThemeChange() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final esOscuro = ThemeService.esOscuro;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingL, vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 42, height: 42,
+            decoration: BoxDecoration(
+              color: esOscuro
+                  ? const Color(0xFF1E3A5F)
+                  : const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              esOscuro ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+              color: esOscuro
+                  ? const Color(0xFF60A5FA)
+                  : const Color(0xFFF5B732),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  esOscuro ? 'Modo oscuro' : 'Modo claro',
+                  style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  esOscuro
+                      ? 'Toca para cambiar al modo claro'
+                      : 'Toca para cambiar al modo oscuro',
+                  style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: esOscuro,
+            onChanged: (_) => ThemeService.toggle(),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _MenuItem extends StatelessWidget {
@@ -390,6 +506,9 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -410,14 +529,14 @@ class _MenuItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label, style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w700)),
+                    Text(label, style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 1),
                     Text(subtitle,
-                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontSize: 12)),
+                        style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant, fontSize: 12)),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textHint, size: 20),
+              Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant, size: 20),
             ],
           ),
         ),
@@ -535,23 +654,28 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
 
     final confirmar = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusXL)),
-        title: const Text('Confirmar cambios', style: AppTextStyles.headlineMedium),
-        content: Text('¿Deseas guardar los cambios en tu perfil?',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancelar',
-                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Guardar'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final colorScheme = Theme.of(ctx).colorScheme;
+        final textTheme = Theme.of(ctx).textTheme;
+        
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusXL)),
+          title: Text('Confirmar cambios', style: textTheme.headlineMedium),
+          content: Text('¿Deseas guardar los cambios en tu perfil?',
+              style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Cancelar',
+                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Guardar'),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmar != true || !mounted) return;
@@ -573,7 +697,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     if (res.ok) {
       _snack('¡Perfil actualizado exitosamente!', error: false);
       await Future.delayed(const Duration(milliseconds: 800));
-      if (mounted) Navigator.of(context).pop(true); // devuelve true → recarga
+      if (mounted) Navigator.of(context).pop(true);
     } else {
       _snack(res.error ?? 'Error al actualizar el perfil', error: true);
     }
@@ -581,24 +705,27 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.textPrimary, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: colorScheme.onSurface, size: 20),
           onPressed: () => Navigator.of(context).pop(false),
         ),
-        title: Text('Editar perfil', style: AppTextStyles.headlineMedium.copyWith(fontSize: 18)),
+        title: Text('Editar perfil', style: textTheme.headlineMedium?.copyWith(fontSize: 18)),
         centerTitle: true,
         actions: [
           if (!_loading)
             TextButton(
               onPressed: _guardar,
               child: Text('Guardar',
-                  style: AppTextStyles.bodyMedium.copyWith(
+                  style: textTheme.bodyMedium?.copyWith(
                       color: AppColors.primary, fontWeight: FontWeight.w800)),
             ),
         ],
@@ -608,29 +735,27 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         padding: const EdgeInsets.all(AppDimensions.paddingM),
         child: Column(
           children: [
-            // ── Card info bloqueada ───────────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(AppDimensions.paddingM),
               margin: const EdgeInsets.only(bottom: AppDimensions.paddingM),
               decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
+                color: colorScheme.surfaceVariant,
                 borderRadius: BorderRadius.circular(AppDimensions.radiusL),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: colorScheme.outline),
               ),
               child: Row(children: [
-                const Icon(Icons.lock_outline_rounded, color: AppColors.textHint, size: 16),
+                Icon(Icons.lock_outline_rounded, color: colorScheme.onSurfaceVariant, size: 16),
                 const SizedBox(width: 8),
                 Expanded(child: Text(
                   'Cédula y email no se pueden modificar',
-                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                  style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                 )),
               ]),
             ),
 
-            // ── Campos editables ──────────────────────────────────────────
-            _buildCard(children: [
-              _buildField(
+            _buildCard(context, children: [
+              _buildField(context,
                 label: 'Nombre *',
                 controller: _nombreCtrl,
                 icon: Icons.person_outline_rounded,
@@ -639,7 +764,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                 onChanged: (_) => setState(() => _nombreError = false),
               ),
               const SizedBox(height: AppDimensions.paddingM),
-              _buildField(
+              _buildField(context,
                 label: 'Apellido *',
                 controller: _apellidoCtrl,
                 icon: Icons.person_outline_rounded,
@@ -651,8 +776,8 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
 
             const SizedBox(height: AppDimensions.paddingM),
 
-            _buildCard(children: [
-              _buildField(
+            _buildCard(context, children: [
+              _buildField(context,
                 label: 'Dirección',
                 controller: _direccionCtrl,
                 icon: Icons.location_on_outlined,
@@ -661,7 +786,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                 onChanged: (_) => setState(() => _direccionError = false),
               ),
               const SizedBox(height: AppDimensions.paddingM),
-              _buildField(
+              _buildField(context,
                 label: 'Ciudad',
                 controller: _ciudadCtrl,
                 icon: Icons.location_city_outlined,
@@ -670,7 +795,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                 onChanged: (_) => setState(() => _ciudadError = false),
               ),
               const SizedBox(height: AppDimensions.paddingM),
-              _buildField(
+              _buildField(context,
                 label: 'Teléfono',
                 controller: _telefonoCtrl,
                 icon: Icons.phone_outlined,
@@ -683,15 +808,14 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
 
             const SizedBox(height: AppDimensions.paddingL),
 
-            // ── Campos bloqueados ─────────────────────────────────────────
-            _buildCard(children: [
-              _buildBlockedField(
+            _buildCard(context, children: [
+              _buildBlockedField(context,
                 label: 'Cédula',
                 value: widget.usuario.cedula,
                 icon: Icons.badge_outlined,
               ),
               const SizedBox(height: AppDimensions.paddingM),
-              _buildBlockedField(
+              _buildBlockedField(context,
                 label: 'Email',
                 value: widget.usuario.email,
                 icon: Icons.email_outlined,
@@ -713,7 +837,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: Text('Cancelar',
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                  style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
             ),
 
             const SizedBox(height: 40),
@@ -723,12 +847,14 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     );
   }
 
-  Widget _buildCard({required List<Widget> children}) {
+  Widget _buildCard(BuildContext context, {required List<Widget> children}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppDimensions.paddingL),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusXL),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 4)),
@@ -738,7 +864,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     );
   }
 
-  Widget _buildField({
+  Widget _buildField(BuildContext context, {
     required String label,
     required TextEditingController controller,
     required IconData icon,
@@ -747,27 +873,30 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     TextInputType? keyboardType,
     required ValueChanged<String> onChanged,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600, color: AppColors.textPrimary, fontSize: 13)),
+            style: textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600, color: colorScheme.onSurface, fontSize: 13)),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
           keyboardType: keyboardType,
-          style: AppTextStyles.bodyMedium,
+          style: textTheme.bodyMedium,
           onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icon,
-                color: hasError ? AppColors.error : AppColors.textHint,
+                color: hasError ? AppColors.error : colorScheme.onSurfaceVariant,
                 size: AppDimensions.iconS),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radiusM),
               borderSide: BorderSide(
-                  color: hasError ? AppColors.error : AppColors.border,
+                  color: hasError ? AppColors.error : colorScheme.outline,
                   width: hasError ? 1.5 : 1),
             ),
             focusedBorder: OutlineInputBorder(
@@ -781,30 +910,33 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     );
   }
 
-  Widget _buildBlockedField({
+  Widget _buildBlockedField(BuildContext context, {
     required String label,
     required String value,
     required IconData icon,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600, color: AppColors.textHint, fontSize: 13)),
+            style: textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant, fontSize: 13)),
         const SizedBox(height: 6),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           decoration: BoxDecoration(
-            color: AppColors.surfaceVariant,
+            color: colorScheme.surfaceVariant,
             borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: colorScheme.outline),
           ),
           child: Row(children: [
-            Icon(icon, color: AppColors.textHint, size: AppDimensions.iconS),
+            Icon(icon, color: colorScheme.onSurfaceVariant, size: AppDimensions.iconS),
             const SizedBox(width: 12),
-            Text(value, style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textHint)),
+            Text(value, style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
           ]),
         ),
       ],

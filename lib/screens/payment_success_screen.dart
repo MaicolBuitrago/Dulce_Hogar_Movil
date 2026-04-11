@@ -80,16 +80,19 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.background,
       body: SafeArea(
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(AppDimensions.paddingL),
             child: switch (_estado) {
-              _Estado.cargando => _buildCargando(),
-              _Estado.exito   => _buildExito(),
-              _Estado.error   => _buildError(),
+              _Estado.cargando => _buildCargando(context),
+              _Estado.exito   => _buildExito(context),
+              _Estado.error   => _buildError(context),
             },
           ),
         ),
@@ -97,74 +100,88 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
     );
   }
 
-  Widget _buildCargando() => const Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      CircularProgressIndicator(color: AppColors.primary),
-      SizedBox(height: AppDimensions.paddingM),
-      Text('Registrando tu pedido...', style: AppTextStyles.bodyMedium),
-    ],
-  );
+  Widget _buildCargando(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const CircularProgressIndicator(color: AppColors.primary),
+        const SizedBox(height: AppDimensions.paddingM),
+        Text('Registrando tu pedido...', style: textTheme.bodyMedium),
+      ],
+    );
+  }
 
-  Widget _buildExito() => Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Container(
-        width: 80, height: 80,
-        decoration: BoxDecoration(
-          color: const Color(0xFF4CAF50).withOpacity(0.1),
-          shape: BoxShape.circle,
+  Widget _buildExito(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 80, height: 80,
+          decoration: BoxDecoration(
+            color: const Color(0xFF4CAF50).withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.check_circle_rounded,
+              color: Color(0xFF4CAF50), size: 48),
         ),
-        child: const Icon(Icons.check_circle_rounded,
-            color: Color(0xFF4CAF50), size: 48),
-      ),
-      const SizedBox(height: AppDimensions.paddingL),
-      const Text('¡Pago exitoso!', style: AppTextStyles.displayMedium),
-      const SizedBox(height: AppDimensions.paddingS),
-      Text(
-        'Tu pedido fue registrado correctamente.',
-        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
-        textAlign: TextAlign.center,
-      ),
-      const SizedBox(height: AppDimensions.paddingXL),
-      ElevatedButton(
-        onPressed: () =>
-            Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false),
-        child: const Text('Volver al inicio'),
-      ),
-    ],
-  );
+        const SizedBox(height: AppDimensions.paddingL),
+        Text('¡Pago exitoso!', style: textTheme.displayMedium),
+        const SizedBox(height: AppDimensions.paddingS),
+        Text(
+          'Tu pedido fue registrado correctamente.',
+          style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppDimensions.paddingXL),
+        ElevatedButton(
+          onPressed: () =>
+              Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false),
+          child: const Text('Volver al inicio'),
+        ),
+      ],
+    );
+  }
 
-  Widget _buildError() => Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Container(
-        width: 80, height: 80,
-        decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.1),
-          shape: BoxShape.circle,
+  Widget _buildError(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 80, height: 80,
+          decoration: BoxDecoration(
+            color: AppColors.error.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.error_outline_rounded,
+              color: AppColors.error, size: 48),
         ),
-        child: const Icon(Icons.error_outline_rounded,
-            color: AppColors.error, size: 48),
-      ),
-      const SizedBox(height: AppDimensions.paddingL),
-      const Text('Algo salió mal', style: AppTextStyles.displayMedium),
-      const SizedBox(height: AppDimensions.paddingS),
-      Text(
-        _mensaje.isNotEmpty
-            ? _mensaje
-            : 'No pudimos registrar tu pedido. Tu pago sí fue procesado.',
-        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
-        textAlign: TextAlign.center,
-      ),
-      const SizedBox(height: AppDimensions.paddingXL),
-      ElevatedButton(
-        onPressed: () =>
-            Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false),
-        child: const Text('Volver al inicio'),
-      ),
-    ],
-  );
+        const SizedBox(height: AppDimensions.paddingL),
+        Text('Algo salió mal', style: textTheme.displayMedium),
+        const SizedBox(height: AppDimensions.paddingS),
+        Text(
+          _mensaje.isNotEmpty
+              ? _mensaje
+              : 'No pudimos registrar tu pedido. Tu pago sí fue procesado.',
+          style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppDimensions.paddingXL),
+        ElevatedButton(
+          onPressed: () =>
+              Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false),
+          child: const Text('Volver al inicio'),
+        ),
+      ],
+    );
+  }
 }
 
 enum _Estado { cargando, exito, error }

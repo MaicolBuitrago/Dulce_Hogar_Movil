@@ -71,8 +71,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -92,12 +95,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ),
 
                     const SizedBox(height: AppDimensions.paddingM),
-                    const Text('Método de pago', style: AppTextStyles.displayMedium),
+                    Text('Método de pago', style: textTheme.displayMedium),
                     const SizedBox(height: 6),
-                    Text('Selecciona cómo quieres pagar tu pedido', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
+                    Text('Selecciona cómo quieres pagar tu pedido', 
+                      style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant), 
+                      textAlign: TextAlign.center),
 
                     const SizedBox(height: AppDimensions.paddingL),
-                    _buildOrderSummary(),
+                    _buildOrderSummary(context),
                     const SizedBox(height: AppDimensions.paddingL),
 
                     ..._methods.map((m) {
@@ -109,28 +114,47 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
                           padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingM),
                           decoration: BoxDecoration(
-                            color: m.available ? (isSelected ? AppColors.primary.withOpacity(0.05) : AppColors.surface) : AppColors.surfaceVariant,
+                            color: m.available 
+                                ? (isSelected ? AppColors.primary.withOpacity(0.05) : colorScheme.surface) 
+                                : colorScheme.surfaceVariant,
                             borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-                            border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: isSelected ? 2 : 1),
+                            border: Border.all(
+                              color: isSelected ? AppColors.primary : colorScheme.outline, 
+                              width: isSelected ? 2 : 1
+                            ),
                           ),
                           child: Row(
                             children: [
                               Container(
                                 width: 42, height: 42,
-                                decoration: BoxDecoration(color: m.available ? m.color.withOpacity(0.12) : AppColors.border.withOpacity(0.5), borderRadius: BorderRadius.circular(AppDimensions.radiusS)),
-                                child: Icon(m.icon, color: m.available ? m.color : AppColors.textHint, size: 22),
+                                decoration: BoxDecoration(
+                                  color: m.available ? m.color.withOpacity(0.12) : colorScheme.outline.withOpacity(0.5), 
+                                  borderRadius: BorderRadius.circular(AppDimensions.radiusS)
+                                ),
+                                child: Icon(m.icon, color: m.available ? m.color : colorScheme.onSurfaceVariant, size: 22),
                               ),
                               const SizedBox(width: AppDimensions.paddingM),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(m.title, style: AppTextStyles.titleMedium.copyWith(color: m.available ? AppColors.textPrimary : AppColors.textHint)),
-                                    if (m.subtitle != null) Text(m.subtitle!, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textHint)),
+                                    Text(m.title, 
+                                      style: textTheme.titleMedium?.copyWith(
+                                        color: m.available ? colorScheme.onSurface : colorScheme.onSurfaceVariant
+                                      )
+                                    ),
+                                    if (m.subtitle != null) 
+                                      Text(m.subtitle!, 
+                                        style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)
+                                      ),
                                   ],
                                 ),
                               ),
-                              Icon(m.available ? Icons.arrow_forward_rounded : Icons.lock_outline_rounded, color: m.available ? AppColors.primary : AppColors.textHint, size: 20),
+                              Icon(
+                                m.available ? Icons.arrow_forward_rounded : Icons.lock_outline_rounded, 
+                                color: m.available ? AppColors.primary : colorScheme.onSurfaceVariant, 
+                                size: 20
+                              ),
                             ],
                           ),
                         ),
@@ -142,9 +166,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.lock_rounded, color: AppColors.textHint, size: 14),
+                        Icon(Icons.lock_rounded, color: colorScheme.onSurfaceVariant, size: 14),
                         const SizedBox(width: 4),
-                        Text('Pago 100% seguro y encriptado', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textHint)),
+                        Text('Pago 100% seguro y encriptado', 
+                          style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)
+                        ),
                       ],
                     ),
 
@@ -169,51 +195,79 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) => Container(
-    color: AppColors.surface,
-    padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingS),
-    child: Row(
-      children: [
-        GestureDetector(
-          onTap: () => Navigator.of(context).maybePop(),
-          child: Container(width: 40, height: 40, decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(AppDimensions.radiusM)), child: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary, size: 20)),
-        ),
-        const SizedBox(width: AppDimensions.paddingM),
-        const Text('Pago', style: AppTextStyles.headlineLarge),
-      ],
-    ),
-  );
+  Widget _buildHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Container(
+      color: colorScheme.surface,
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingS),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).maybePop(),
+            child: Container(
+              width: 40, height: 40, 
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceVariant, 
+                borderRadius: BorderRadius.circular(AppDimensions.radiusM)
+              ), 
+              child: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface, size: 20)
+            ),
+          ),
+          const SizedBox(width: AppDimensions.paddingM),
+          Text('Pago', style: textTheme.headlineLarge),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildOrderSummary() => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(AppDimensions.paddingM),
-    decoration: BoxDecoration(color: AppColors.surfaceVariant, borderRadius: BorderRadius.circular(AppDimensions.radiusM), border: Border.all(color: AppColors.border)),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Resumen del pedido', style: AppTextStyles.headlineMedium),
-        const SizedBox(height: AppDimensions.paddingS),
-        ..._productos.map((p) => Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Row(
+  Widget _buildOrderSummary(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppDimensions.paddingM),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant, 
+        borderRadius: BorderRadius.circular(AppDimensions.radiusM), 
+        border: Border.all(color: colorScheme.outline)
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Resumen del pedido', style: textTheme.headlineMedium),
+          const SizedBox(height: AppDimensions.paddingS),
+          ..._productos.map((p) => Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: Text('${p.nombre} (x${p.cantidad})', 
+                  style: textTheme.bodySmall, 
+                  overflow: TextOverflow.ellipsis
+                )),
+                Text(Formatters.precio(p.precio * p.cantidad), 
+                  style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)
+                ),
+              ],
+            ),
+          )),
+          Divider(height: AppDimensions.paddingM, color: colorScheme.outline),
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: Text('${p.nombre} (x${p.cantidad})', style: AppTextStyles.bodySmall, overflow: TextOverflow.ellipsis)),
-              Text(Formatters.precio(p.precio * p.cantidad), style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600)),
+              Text('Total a pagar:', style: textTheme.titleMedium),
+              Text(Formatters.precio(_total), 
+                style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)
+              ),
             ],
           ),
-        )),
-        const Divider(height: AppDimensions.paddingM, color: AppColors.divider),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Total a pagar:', style: AppTextStyles.titleMedium),
-            Text(Formatters.precio(_total), style: AppTextStyles.priceLarge),
-          ],
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 class _PaymentMethod {

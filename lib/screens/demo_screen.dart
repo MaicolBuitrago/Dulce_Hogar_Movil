@@ -8,8 +8,11 @@ class DemoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colorScheme.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.paddingL),
@@ -44,11 +47,10 @@ class DemoScreen extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Dulce Hogar', style: AppTextStyles.headlineLarge),
+                      Text('Dulce Hogar', style: textTheme.headlineLarge),
                       Text(
                         'Vista previa de pantallas',
-                        style: AppTextStyles.bodySmall
-                            .copyWith(color: AppColors.textSecondary),
+                        style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -72,8 +74,7 @@ class DemoScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Pantalla solo para desarrollo. Eliminar antes de producción.',
-                        style: AppTextStyles.bodySmall
-                            .copyWith(color: AppColors.secondaryDark),
+                        style: textTheme.bodySmall?.copyWith(color: AppColors.secondaryDark),
                       ),
                     ),
                   ],
@@ -82,7 +83,7 @@ class DemoScreen extends StatelessWidget {
 
               const SizedBox(height: AppDimensions.paddingL),
 
-              const Text('Pantallas', style: AppTextStyles.headlineMedium),
+              Text('Pantallas', style: textTheme.headlineMedium),
               const SizedBox(height: AppDimensions.paddingM),
 
               Expanded(
@@ -169,12 +170,15 @@ class _DemoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     return GestureDetector(
       onTap: () => Navigator.of(context).pushNamed(route),
       child: Container(
         padding: const EdgeInsets.all(AppDimensions.paddingM),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
           boxShadow: [
             BoxShadow(
@@ -200,15 +204,15 @@ class _DemoCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: AppTextStyles.titleLarge),
+                  Text(title, style: textTheme.titleLarge),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: AppTextStyles.bodySmall),
+                  Text(subtitle, style: textTheme.bodySmall),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios_rounded,
-              color: AppColors.textHint,
+              color: colorScheme.onSurfaceVariant,
               size: 16,
             ),
           ],
