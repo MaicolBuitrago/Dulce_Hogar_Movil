@@ -1,6 +1,3 @@
-// lib/services/service_result.dart
-// Wrapper genérico de resultado para todos los servicios
-
 class ServiceResult<T> {
   final T? data;
   final String? error;

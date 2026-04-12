@@ -1,6 +1,3 @@
-// lib/models/models.dart
-// Modelos reales basados en el schema de Supabase / respuestas del backend
-
 // ══════════════════════════════════════════════════════════════
 // USUARIO
 // ══════════════════════════════════════════════════════════════

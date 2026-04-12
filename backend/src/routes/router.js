@@ -9,7 +9,8 @@ import carritoRoutes   from "./carritoRoutes.js";
 import favoritosRoutes from "./favoritosRoutes.js";
 import pedidoRoutes      from "./pedidoRoutes.js";
 import misPedidosRoutes  from "./misPedidosRoutes.js";
-import direccionRoutes from "./direccionRoutes.js";
+import direccionRoutes  from "./direccionRoutes.js";
+import resenasRoutes   from "./resenasRoutes.js";
 
 const router = express.Router();
 
@@ -27,7 +28,7 @@ router.use("/productos",       productoRoutes);
 
 // ── Categorías y marcas ───────────────────────────────────────
 router.use("/categorias",      categoriaRoutes);
-router.use("/marcas",          categoriaRoutes); // marcas comparten el mismo router
+router.use("/marcas",          categoriaRoutes); 
 
 // ── Carrito ───────────────────────────────────────────────────
 router.use("/carrito",         carritoRoutes);
@@ -47,5 +48,8 @@ router.use("/pedidos/mis-pedidos", misPedidosRoutes);
 
 // ── Refresh token ─────────────────────────────────────────────
 router.post("/refresh", (req, res, next) => usuarioRoutes(req, res, next));
+
+// ── Reseñas y calificaciones ───────────────────────────────────
+router.use("/resenas", resenasRoutes);
 
 export default router;

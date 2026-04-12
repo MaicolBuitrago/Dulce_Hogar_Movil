@@ -1,4 +1,3 @@
-// lib/screens/payment_screen.dart
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';

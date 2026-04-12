@@ -1,13 +1,3 @@
-// lib/services/api_client.dart
-//
-// Cambios respecto a la versión anterior:
-//  • Token persistido con flutter_secure_storage (sobrevive cierres de app)
-//  • Refresh automático: si el access token expiró se llama /api/refresh
-//    antes de reintentar la petición original, de forma transparente
-//  • Si el refresh también falló → redirige al login con mensaje claro
-//  • init() debe llamarse desde main() antes de runApp()
-//  • Método estático `initSession()` para recuperar sesión al arrancar
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';

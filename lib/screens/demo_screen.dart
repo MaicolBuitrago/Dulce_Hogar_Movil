@@ -1,5 +1,3 @@
-// lib/screens/demo_screen.dart
-// SOLO PARA DESARROLLO — eliminar en producción
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 

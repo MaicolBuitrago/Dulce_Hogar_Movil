@@ -1,4 +1,3 @@
-// lib/services/mercadopago_service.dart
 import '../models/models.dart';
 import 'api_client.dart';
 import 'service_result.dart';

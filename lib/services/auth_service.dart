@@ -1,10 +1,3 @@
-// lib/services/auth_service.dart
-//
-// Cambios:
-//  • login() guarda los tokens con ApiClient.guardarSesion()
-//  • logout() limpia almacenamiento seguro además de memoria
-//  • Nuevo método checkSesionActiva() para usarse en main()
-
 import '../models/models.dart';
 import 'api_client.dart';
 import 'service_result.dart';

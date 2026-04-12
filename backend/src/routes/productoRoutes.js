@@ -1,4 +1,3 @@
-// src/routes/productoRoutes.js
 import express from "express";
 import { supabase } from "../config/db.js";
 import { supabase as supabaseDB } from "../config/supabase.js";

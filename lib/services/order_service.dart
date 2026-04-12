@@ -1,8 +1,3 @@
-// lib/services/order_service.dart
-//
-// Servicio que conecta Flutter con los endpoints de mis pedidos.
-// Sigue exactamente el mismo patrón que favorites_service.dart y cart_service.dart
-
 import '../models/order_models.dart';
 import 'api_client.dart';
 import 'service_result.dart';

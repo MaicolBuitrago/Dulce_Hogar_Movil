@@ -1,4 +1,3 @@
-// src/routes/favoritosRoutes.js
 import express from "express";
 import { supabase } from "../config/db.js";
 import { verificarToken } from "../controller/authMiddleware.js";

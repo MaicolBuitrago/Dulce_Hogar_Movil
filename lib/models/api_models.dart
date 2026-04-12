@@ -1,6 +1,3 @@
-// lib/models/api_models.dart
-// Modelos basados en el schema real de Supabase - Dulce Hogar
-
 // ──────────────────────────────────────────────────────────────
 // USUARIO
 // ──────────────────────────────────────────────────────────────

@@ -1,4 +1,3 @@
-// src/config/supabase.js
 // Usa la Service Role key — SOLO en backend, nunca en frontend
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";

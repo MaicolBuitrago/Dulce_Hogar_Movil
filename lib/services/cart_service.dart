@@ -1,4 +1,3 @@
-// lib/services/cart_service.dart
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import 'api_client.dart';

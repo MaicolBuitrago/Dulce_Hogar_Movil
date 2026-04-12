@@ -1,4 +1,3 @@
-// src/routes/mercadopagoRoutes.js
 import express from "express";
 import { MercadoPagoConfig, Preference, Payment } from "mercadopago";
 import dotenv from "dotenv";

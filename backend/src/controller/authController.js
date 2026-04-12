@@ -1,4 +1,3 @@
-// src/controller/authController.js
 import { supabase } from "../config/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";

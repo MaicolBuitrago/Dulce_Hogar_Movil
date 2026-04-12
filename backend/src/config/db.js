@@ -1,4 +1,3 @@
-// src/config/db.js
 // Cliente principal — acceso a tablas (RLS activo)
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
