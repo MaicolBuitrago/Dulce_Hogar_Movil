@@ -32,12 +32,18 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    print('🟢 [INIT] PASO 1 - Iniciando HomeScreen');
+    print('🟢 [INIT] PASO 2 - Llamando a _loadCategorias()');
     _loadCategorias();
+    print('🟢 [INIT] PASO 3 - Llamando a _loadMarcas()');
     _loadMarcas();
+    print('🟢 [INIT] PASO 4 - Llamando a _loadProductos()');
     _loadProductos();
     _syncCartCount();
     _syncFavorites();
+    print('🟢 [INIT] PASO 5 - InitState completado');
   }
+  
 
   Future<void> _syncCartCount() async => CartService.getCarrito();
   Future<void> _syncFavorites() async => FavoritesService.getFavoritos();
@@ -49,18 +55,27 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadCategorias() async {
+    print('🔵 [LOAD_CATEGORIAS] Iniciando carga de categorías');
     final r = await ProductService.getCategorias();
+    print('🔵 [LOAD_CATEGORIAS] Resultado - ok: ${r.ok}, error: ${r.error}');
     if (!mounted) return;
     setState(() {
       _categorias  = r.data ?? [];
       _loadingCats = false;
     });
+    print('🔵 [LOAD_CATEGORIAS] Categorías cargadas: ${_categorias.length}');
   }
 
   Future<void> _loadMarcas() async {
+    print('🔵 [LOAD_MARCAS] Iniciando carga de marcas');
     final r = await ProductService.getMarcas();
+    print('🔵 [LOAD_MARCAS] Resultado - ok: ${r.ok}, error: ${r.error}');
+    print('🔵 [LOAD_MARCAS] Data recibida: ${r.data}');
     if (!mounted) return;
-    setState(() => _marcas = r.data ?? []);
+    setState(() {
+      _marcas = r.data ?? [];
+      print('🔵 [LOAD_MARCAS] Marcas en estado: ${_marcas.length}');
+    });
   }
 
   Future<void> _loadProductos() async {
@@ -85,9 +100,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onCategoryTap(int index, int? idCat) {
+    print('🟢 [CATEGORY_TAP] index: $index, idCat: $idCat');
     setState(() {
       _selectedCatIndex = index;
-      _selectedCatId    = idCat;
+      _selectedCatId = idCat;
+      _filtros = FiltrosProducto(
+        search: _filtros.search,
+        precioMin: _filtros.precioMin,
+        precioMax: _filtros.precioMax,
+        idMarca: _filtros.idMarca,
+        idCategoria: idCat,
+        orden: _filtros.orden,
+      );
     });
     _loadProductos();
   }
@@ -107,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirFiltros() async {
+    print('🟢 [ABRIR_FILTROS] Marcas disponibles: ${_marcas.length}');
     final nuevos = await showModalBottomSheet<FiltrosProducto>(
       context: context,
       isScrollControlled: true,
@@ -117,12 +142,13 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (nuevos != null && mounted) {
+      print('🟢 [ABRIR_FILTROS] Filtros aplicados - idMarca: ${nuevos.idMarca}');
       setState(() {
         _filtros = FiltrosProducto(
           search: _filtros.search,
           precioMin: nuevos.precioMin,
           precioMax: nuevos.precioMax,
-          idMarca: nuevos.idMarca,
+          idMarca: nuevos.idMarca == 0 ? null : nuevos.idMarca,
           idCategoria: _filtros.idCategoria,
           orden: nuevos.orden,
         );
@@ -186,6 +212,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _limpiarFiltros() {
     setState(() {
       _filtros = const FiltrosProducto();
+      _selectedCatIndex = 0;
+      _selectedCatId = null;
     });
     _loadProductos();
   }
@@ -730,10 +758,12 @@ class _FilterSheetState extends State<_FilterSheet> {
     super.initState();
     _orden   = widget.filtrosActuales.orden;
     _idMarca = widget.filtrosActuales.idMarca;
+    if (_idMarca == 0) _idMarca = null;
     _rango   = RangeValues(
       widget.filtrosActuales.precioMin ?? 0,
       widget.filtrosActuales.precioMax ?? _maxPrecio,
     );
+    print('🟢 [FILTER_SHEET] Marcas recibidas: ${widget.marcas.length}');
   }
 
   bool get _rangoPorDefecto =>
@@ -743,7 +773,7 @@ class _FilterSheetState extends State<_FilterSheet> {
     Navigator.of(context).pop(FiltrosProducto(
       precioMin: _rangoPorDefecto ? null : _rango.start,
       precioMax: _rangoPorDefecto ? null : _rango.end,
-      idMarca:   _idMarca,
+      idMarca:   _idMarca == 0 ? null : _idMarca,
       orden:     _orden,
     ));
   }
@@ -763,7 +793,7 @@ class _FilterSheetState extends State<_FilterSheet> {
     final cantActivos = FiltrosProducto(
             precioMin: _rangoPorDefecto ? null : _rango.start,
             precioMax: _rangoPorDefecto ? null : _rango.end,
-            idMarca:   _idMarca,
+            idMarca:   _idMarca == 0 ? null : _idMarca,
             orden:     _orden)
         .cantidadActivos;
 

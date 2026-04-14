@@ -84,7 +84,7 @@ class ProductService {
   // ── GET /api/productos con filtros ───────────────────────────
   static Future<ServiceResult<List<Producto>>> getProductos({
     FiltrosProducto? filtros,
-    String? search,  // para compatibilidad
+    String? search,
   }) async {
     final f = filtros ?? FiltrosProducto(search: search);
     final params = <String>[];
@@ -100,15 +100,17 @@ class ProductService {
     
     // Filtros por ID
     if (f.idMarca != null) params.add('idMarca=${f.idMarca}');
+    
+    // Enviar idCategoria como parámetro
     if (f.idCategoria != null) params.add('idCategoria=${f.idCategoria}');
     
-    // Ordenamiento (solo si no es el default "recientes")
+    // Ordenamiento
     if (f.orden != OrdenProducto.recientes && f.orden.queryParam.isNotEmpty) {
       params.add('ordenar=${f.orden.queryParam}');
     }
 
     final path = params.isEmpty ? '/productos' : '/productos?${params.join('&')}';
-    print('📡 URL de productos: $path');  // Debug
+    print('📡 URL productos: $path');
     
     final res = await ApiClient.get(path);
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al obtener productos');
@@ -126,9 +128,12 @@ class ProductService {
 
   // ── GET /api/categorias ──────────────────────────────────────
   static Future<ServiceResult<List<Categoria>>> getCategorias() async {
+    print('🔵 [SERVICE] getCategorias() - INICIO');
     final res = await ApiClient.get('/categorias');
+    print('🔵 [SERVICE] getCategorias() - statusCode: ${res.statusCode}, ok: ${res.ok}');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al obtener categorías');
     final list = (res.data as List).map((j) => Categoria.fromJson(j)).toList();
+    print('🔵 [SERVICE] getCategorias() - ${list.length} categorías');
     return ServiceResult.ok(list);
   }
 
@@ -140,11 +145,41 @@ class ProductService {
     return ServiceResult.ok(list);
   }
 
-  // ── GET /api/marcas (ajusta la ruta según tu backend) ────────
+  // ── GET /api/marcas ──────────────────────────────────────────
   static Future<ServiceResult<List<Marca>>> getMarcas() async {
-    final res = await ApiClient.get('/categorias/marcas/lista');
-    if (!res.ok) return ServiceResult.error(res.error ?? 'Error al obtener marcas');
+    print('🔵 [SERVICE] getMarcas() - INICIO');
+    print('🔵 [SERVICE] getMarcas() - URL: /marcas');
+    
+    final res = await ApiClient.get('/marcas');
+    
+    print('🔵 [SERVICE] getMarcas() - statusCode: ${res.statusCode}');
+    print('🔵 [SERVICE] getMarcas() - ok: ${res.ok}');
+    print('🔵 [SERVICE] getMarcas() - error: ${res.error}');
+    print('🔵 [SERVICE] getMarcas() - data: ${res.data}');
+    print('🔵 [SERVICE] getMarcas() - data type: ${res.data.runtimeType}');
+    
+    if (!res.ok) {
+      print('🔵 [SERVICE] getMarcas() - ERROR, retornando error');
+      return ServiceResult.error(res.error ?? 'Error al obtener marcas');
+    }
+    
+    if (res.data == null) {
+      print('🔵 [SERVICE] getMarcas() - data es NULL');
+      return ServiceResult.error('No se recibieron datos de marcas');
+    }
+    
+    if (res.data is! List) {
+      print('🔵 [SERVICE] getMarcas() - data NO es una lista, es: ${res.data.runtimeType}');
+      return ServiceResult.error('Formato de datos inválido');
+    }
+    
     final list = (res.data as List).map((j) => Marca.fromJson(j)).toList();
+    print('🔵 [SERVICE] getMarcas() - ${list.length} marcas parseadas');
+    
+    if (list.isNotEmpty) {
+      print('🔵 [SERVICE] getMarcas() - Primera marca: ${list[0].descripcion}');
+    }
+    
     return ServiceResult.ok(list);
   }
 }

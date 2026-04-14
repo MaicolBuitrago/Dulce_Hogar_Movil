@@ -312,6 +312,16 @@ class _PerfilScreenState extends State<PerfilScreen> {
             onTap: () => Navigator.of(context).pushNamed('/mis-pedidos'),
           ),
           const _MenuDivider(),
+          // ⭐ NUEVO: SOPORTE Y CONSULTAS ⭐
+          _MenuItem(
+            icon: Icons.support_agent_rounded,
+            iconColor: AppColors.primary,
+            iconBg: AppColors.primaryPale,
+            label: 'Soporte y consultas',
+            subtitle: 'Chatea con nosotros',
+            onTap: () => Navigator.of(context).pushNamed('/soporte'),
+          ),
+          const _MenuDivider(),
           const _ThemeToggleItem(),
         ],
       ),

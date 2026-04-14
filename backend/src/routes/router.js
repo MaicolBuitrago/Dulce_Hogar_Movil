@@ -11,6 +11,8 @@ import pedidoRoutes      from "./pedidoRoutes.js";
 import misPedidosRoutes  from "./misPedidosRoutes.js";
 import direccionRoutes  from "./direccionRoutes.js";
 import resenasRoutes   from "./resenasRoutes.js";
+import soporteRoutes   from "./soporteRoutes.js";
+import marcasRoutes    from "./marcasRoutes.js";
 
 const router = express.Router();
 
@@ -26,9 +28,11 @@ router.use("/usuario",         usuarioRoutes);
 // ── Productos ─────────────────────────────────────────────────
 router.use("/productos",       productoRoutes);
 
-// ── Categorías y marcas ───────────────────────────────────────
+// ── Categorías ───────────────────────────────────────
 router.use("/categorias",      categoriaRoutes);
-router.use("/marcas",          categoriaRoutes); 
+
+// ── Marcas ───────────────────────────────────────────────────
+router.use("/marcas",          marcasRoutes); 
 
 // ── Carrito ───────────────────────────────────────────────────
 router.use("/carrito",         carritoRoutes);
@@ -45,6 +49,9 @@ router.use("/estadisticas",    pedidoRoutes);
 
 // ── Pedidos (cliente) ─────────────────────────────────────────
 router.use("/pedidos/mis-pedidos", misPedidosRoutes);
+
+// ── Soporte y mensajería ──────────────────────────────────────
+router.use("/soporte", soporteRoutes);
 
 // ── Refresh token ─────────────────────────────────────────────
 router.post("/refresh", (req, res, next) => usuarioRoutes(req, res, next));
