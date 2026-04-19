@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../theme/app_theme.dart';
 import '../services/support_service.dart';
 import '../services/auth_service.dart';
@@ -17,11 +18,143 @@ class _SupportScreenState extends State<SupportScreen> {
   bool    _loading  = true;
   String? _error;
   bool    _esAdmin  = false;
+  RealtimeChannel? _realtimeChannel;
+  String? _miCedula;
 
   @override
   void initState() {
     super.initState();
+    _obtenerMiCedula();
     _cargar();
+  }
+
+  Future<void> _obtenerMiCedula() async {
+    final perfil = await AuthService.getPerfil();
+    if (mounted && perfil.ok) {
+      _miCedula = perfil.data?.cedula;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 🔥 SUSCRIPCIÓN A REALTIME PARA TICKETS (con cierre de ticket)
+  // ─────────────────────────────────────────────────────────────
+  void _suscribirRealtime() {
+    final supabase = Supabase.instance.client;
+    
+    _realtimeChannel = supabase.channel('soporte_tickets');
+    
+    _realtimeChannel!
+        // 1️⃣ Escuchar nuevos tickets (INSERT)
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'soportedereclamos',
+          callback: (payload) {
+            if (!mounted) return;
+            print('📡 [REALTIME] Nuevo ticket insertado');
+            _cargar();
+          },
+        )
+        // 2️⃣ Escuchar cambios en leído (nuevos mensajes)
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'soportedereclamos',
+          callback: (payload) {
+            if (!mounted) return;
+            
+            final nuevo = payload.newRecord;
+            final idreclamo = nuevo['idreclamo'];
+            final leidoCliente = nuevo['leido_cliente'];
+            final leidoAdmin = nuevo['leido_admin'];
+            final cedula = nuevo['cedula'];
+            
+            if (_esAdmin) {
+              _actualizarTicketEnLista(idreclamo, leidoAdmin, null);
+            } else {
+              if (cedula == _miCedula) {
+                _actualizarTicketEnLista(idreclamo, null, leidoCliente);
+              }
+            }
+          },
+        )
+        // 3️⃣ 🔥 NUEVO: Escuchar CIERRE de ticket (cambio en fecharesolucion)
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'soportedereclamos',
+          callback: (payload) {
+            if (!mounted) return;
+            
+            final nuevo = payload.newRecord;
+            final viejo = payload.oldRecord;
+            final idreclamo = nuevo['idreclamo'];
+            
+            // Verificar si cambió fecharesolucion de null a algo → ticket cerrado
+            final estabaCerrado = viejo['fecharesolucion'] != null;
+            final seCerro = nuevo['fecharesolucion'] != null && !estabaCerrado;
+            
+            if (seCerro) {
+              print('🔒 [REALTIME] Ticket $idreclamo fue cerrado');
+              
+              setState(() {
+                final index = _tickets.indexWhere((t) => t.idreclamo == idreclamo);
+                if (index != -1) {
+                  final ticket = _tickets[index];
+                  _tickets[index] = TicketResumen(
+                    idreclamo: ticket.idreclamo,
+                    asunto: ticket.asunto,
+                    estado: 'Cerrado',
+                    fecha: ticket.fecha,
+                    totalMensajes: ticket.totalMensajes,
+                    tieneNuevos: ticket.tieneNuevos,
+                    idproducto: ticket.idproducto,
+                  );
+                }
+              });
+              
+              // Mostrar notificación opcional
+              final ticketCerrado = _tickets.firstWhere(
+                (t) => t.idreclamo == idreclamo,
+                orElse: () => _tickets.first,
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('El ticket "${ticketCerrado.asunto}" ha sido cerrado'),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+          },
+        )
+        .subscribe((status, error) {
+          print('📡 [REALTIME] Estado suscripción tickets: $status');
+          if (error != null) print('❌ Error: $error');
+        });
+  }
+  
+  void _actualizarTicketEnLista(int idreclamo, bool? nuevoLeidoAdmin, bool? nuevoLeidoCliente) {
+    setState(() {
+      final index = _tickets.indexWhere((t) => t.idreclamo == idreclamo);
+      if (index != -1) {
+        final ticket = _tickets[index];
+        final tieneNuevos = _esAdmin
+            ? (nuevoLeidoAdmin ?? ticket.tieneNuevos)
+            : (nuevoLeidoCliente ?? ticket.tieneNuevos);
+        
+        _tickets[index] = TicketResumen(
+          idreclamo: ticket.idreclamo,
+          asunto: ticket.asunto,
+          estado: ticket.estado,
+          fecha: ticket.fecha,
+          totalMensajes: ticket.totalMensajes,
+          tieneNuevos: tieneNuevos,
+          idproducto: ticket.idproducto,
+        );
+      }
+    });
   }
 
   Future<void> _cargar() async {
@@ -39,8 +172,14 @@ class _SupportScreenState extends State<SupportScreen> {
     if (!mounted) return;
     setState(() {
       _loading = false;
-      if (r.ok) _tickets = r.data ?? [];
-      else      _error   = r.error;
+      if (r.ok) {
+        _tickets = r.data ?? [];
+        if (_realtimeChannel == null) {
+          _suscribirRealtime();
+        }
+      } else {
+        _error = r.error;
+      }
     });
   }
 
@@ -52,7 +191,6 @@ class _SupportScreenState extends State<SupportScreen> {
         esAdmin:   _esAdmin,
       ),
     ));
-    // Recargar al volver para actualizar badges de "nuevos"
     _cargar();
   }
 
@@ -68,6 +206,12 @@ class _SupportScreenState extends State<SupportScreen> {
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _realtimeChannel?.unsubscribe();
+    super.dispose();
   }
 
   @override
@@ -284,7 +428,6 @@ class _TicketCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Ícono con badge de nuevos
             Stack(
               clipBehavior: Clip.none,
               children: [
@@ -319,8 +462,6 @@ class _TicketCard extends StatelessWidget {
               ],
             ),
             const SizedBox(width: 12),
-
-            // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,7 +478,6 @@ class _TicketCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis),
                       ),
-                      // Badge estado
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),

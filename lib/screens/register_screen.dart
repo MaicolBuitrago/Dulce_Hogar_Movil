@@ -117,7 +117,8 @@ class _RegisterScreenState extends State<RegisterScreen>
       backgroundColor: colorScheme.background,
       body: Stack(
         children: [
-          // Decoración de fondo — manchas de color suaves
+          // 🔥 CÍRCULOS DECORATIVOS - LOS 3 EN VERDE
+          // Círculo 1: Superior derecho
           Positioned(
             top: -60,
             right: -60,
@@ -134,6 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen>
               ),
             ),
           ),
+          // Círculo 2: Inferior izquierdo
           Positioned(
             bottom: 80,
             left: -80,
@@ -143,13 +145,14 @@ class _RegisterScreenState extends State<RegisterScreen>
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [Color(0xFF4A7FB5), Color(0xFF2C5F8A)],
+                  colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
                   center: Alignment.center,
                   radius: 0.8,
                 ),
               ),
             ),
           ),
+          // Círculo 3: Superior izquierdo
           Positioned(
             top: 200,
             right: -40,
@@ -159,7 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen>
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [Color(0xFFF5B732), Color(0xFFD97706)],
+                  colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
                   center: Alignment.center,
                   radius: 0.8,
                 ),
