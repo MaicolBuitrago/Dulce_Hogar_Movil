@@ -82,7 +82,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Future<void> _addToCart(Favorito fav) async {
-    // 1. Intentar agregar al carrito
     final cartResult = await CartService.agregar(
       idproducto: fav.idproducto,
       cantidad: 1,
@@ -99,14 +98,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       return;
     }
 
-    // 2. Carrito OK → eliminar de favoritos automáticamente
     await FavoritesService.eliminar(fav.idproducto);
     if (!mounted) return;
 
-    // 3. Quitar la card de la lista local
     setState(() => _favorites.removeWhere((f) => f.idproducto == fav.idproducto));
 
-    // 4. Snackbar informativo
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -248,7 +244,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Card horizontal: imagen | info + badge stock + botones
+// Card horizontal: imagen | info + badge stock + botones (CORREGIDO)
 // ─────────────────────────────────────────────────────────────
 class _FavoriteCard extends StatefulWidget {
   final Favorito fav;
@@ -300,169 +296,173 @@ class _FavoriteCardState extends State<_FavoriteCard> {
             )
           ],
         ),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Imagen ──────────────────────────────────────────────
-              ClipRRect(
-                borderRadius: const BorderRadius.horizontal(
-                    left: Radius.circular(AppDimensions.radiusL)),
-                child: SizedBox(
-                  width: 110,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      img != null
-                          ? CachedNetworkImage(
-                              imageUrl: img,
-                              fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => Container(
-                                  color: colorScheme.surfaceVariant,
-                                  child: Icon(Icons.image_outlined,
-                                      color: colorScheme.onSurfaceVariant, size: 36)),
-                            )
-                          : Container(
-                              color: colorScheme.surfaceVariant,
-                              child: Icon(Icons.image_outlined,
-                                  color: colorScheme.onSurfaceVariant, size: 36)),
-                      // Overlay sin stock sobre la imagen
-                      if (!hasStock)
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            color: Colors.black.withOpacity(0.55),
-                            child: const Text(
-                              'Sin stock',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontFamily: AppTextStyles.fontFamily,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Imagen CORREGIDA ──────────────────────────────────────
+            ClipRRect(
+              borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(AppDimensions.radiusL)),
+              child: Container(
+                width: 110,
+                height: 130,
+                color: colorScheme.surfaceVariant,
+                child: Stack(
+                  children: [
+                    if (img != null && img.isNotEmpty)
+                      CachedNetworkImage(
+                        imageUrl: img,
+                        width: 110,
+                        height: 130,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => Icon(
+                          Icons.image_outlined,
+                          color: colorScheme.onSurfaceVariant,
+                          size: 36,
+                        ),
+                      )
+                    else
+                      Icon(
+                        Icons.image_outlined,
+                        color: colorScheme.onSurfaceVariant,
+                        size: 36,
+                      ),
+                    // Overlay sin stock sobre la imagen
+                    if (!hasStock)
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 5),
+                          color: Colors.black.withOpacity(0.55),
+                          child: const Text(
+                            'Sin stock',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: AppTextStyles.fontFamily,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
                             ),
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
+            ),
 
-              // ── Info + botones ───────────────────────────────────────
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Nombre
-                      Text(
-                        fav.nombre,
-                        style: textTheme.titleMedium,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+            // ── Info + botones ───────────────────────────────────────
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Nombre
+                    Text(
+                      fav.nombre,
+                      style: textTheme.titleMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 5),
+
+                    // Badge disponibilidad
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: hasStock
+                            ? AppColors.success.withOpacity(0.12)
+                            : AppColors.error.withOpacity(0.10),
+                        borderRadius:
+                            BorderRadius.circular(AppDimensions.radiusFull),
                       ),
-                      const SizedBox(height: 5),
-
-                      // Badge disponibilidad
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
+                      child: Text(
+                        hasStock ? 'Disponible' : 'Sin stock',
+                        style: TextStyle(
+                          fontFamily: AppTextStyles.fontFamily,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
                           color: hasStock
-                              ? AppColors.success.withOpacity(0.12)
-                              : AppColors.error.withOpacity(0.10),
-                          borderRadius:
-                              BorderRadius.circular(AppDimensions.radiusFull),
-                        ),
-                        child: Text(
-                          hasStock ? 'Disponible' : 'Sin stock',
-                          style: TextStyle(
-                            fontFamily: AppTextStyles.fontFamily,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: hasStock
-                                ? AppColors.success
-                                : AppColors.error,
-                          ),
+                              ? AppColors.success
+                              : AppColors.error,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                    ),
+                    const SizedBox(height: 8),
 
-                      // Precio
-                      Text(Formatters.precio(fav.precio),
-                          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    // Precio
+                    Text(Formatters.precio(fav.precio),
+                        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
 
-                      const SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-                      // Botones
-                      Row(
-                        children: [
-                          // Agregar al carrito
-                          Expanded(
-                            child: SizedBox(
-                              height: 36,
-                              child: ElevatedButton.icon(
-                                onPressed: hasStock && !_addingToCart
-                                    ? _handleAddToCart
-                                    : null,
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                        AppDimensions.radiusM),
-                                  ),
-                                ),
-                                icon: _addingToCart
-                                    ? const SizedBox(
-                                        width: 14,
-                                        height: 14,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.white))
-                                    : const Icon(
-                                        Icons.shopping_cart_outlined,
-                                        size: 15),
-                                label: Text(
-                                  hasStock ? 'Agregar' : 'Sin stock',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-
-                          // Quitar de favoritos
-                          SizedBox(
+                    // Botones
+                    Row(
+                      children: [
+                        // Agregar al carrito
+                        Expanded(
+                          child: SizedBox(
                             height: 36,
-                            width: 36,
-                            child: IconButton.outlined(
-                              padding: EdgeInsets.zero,
-                              onPressed: widget.onRemove,
-                              style: IconButton.styleFrom(
-                                side: const BorderSide(
-                                    color: AppColors.error, width: 1.2),
+                            child: ElevatedButton.icon(
+                              onPressed: hasStock && !_addingToCart
+                                  ? _handleAddToCart
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                padding: EdgeInsets.zero,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(
                                       AppDimensions.radiusM),
                                 ),
                               ),
-                              icon: const Icon(Icons.favorite_rounded,
-                                  color: AppColors.error, size: 17),
+                              icon: _addingToCart
+                                  ? const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white))
+                                  : const Icon(
+                                      Icons.shopping_cart_outlined,
+                                      size: 15),
+                              label: Text(
+                                hasStock ? 'Agregar' : 'Sin stock',
+                                style: const TextStyle(fontSize: 12),
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        // Quitar de favoritos
+                        SizedBox(
+                          height: 36,
+                          width: 36,
+                          child: IconButton.outlined(
+                            padding: EdgeInsets.zero,
+                            onPressed: widget.onRemove,
+                            style: IconButton.styleFrom(
+                              side: const BorderSide(
+                                  color: AppColors.error, width: 1.2),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    AppDimensions.radiusM),
+                              ),
+                            ),
+                            icon: const Icon(Icons.favorite_rounded,
+                                color: AppColors.error, size: 17),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

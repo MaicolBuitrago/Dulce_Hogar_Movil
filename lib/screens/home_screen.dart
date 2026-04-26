@@ -6,6 +6,7 @@ import '../models/models.dart';
 import '../services/product_service.dart';
 import '../services/cart_service.dart';
 import '../services/favorites_service.dart';
+import '../services/promocion_service.dart';
 import '../utils/formatters.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -26,24 +27,20 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loadingProds = true;
 
   FiltrosProducto _filtros = const FiltrosProducto();
+  
+  Map<int, double> _descuentosPorProducto = {};
 
   final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    print('🟢 [INIT] PASO 1 - Iniciando HomeScreen');
-    print('🟢 [INIT] PASO 2 - Llamando a _loadCategorias()');
     _loadCategorias();
-    print('🟢 [INIT] PASO 3 - Llamando a _loadMarcas()');
     _loadMarcas();
-    print('🟢 [INIT] PASO 4 - Llamando a _loadProductos()');
     _loadProductos();
     _syncCartCount();
     _syncFavorites();
-    print('🟢 [INIT] PASO 5 - InitState completado');
   }
-  
 
   Future<void> _syncCartCount() async => CartService.getCarrito();
   Future<void> _syncFavorites() async => FavoritesService.getFavoritos();
@@ -55,27 +52,54 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadCategorias() async {
-    print('🔵 [LOAD_CATEGORIAS] Iniciando carga de categorías');
     final r = await ProductService.getCategorias();
-    print('🔵 [LOAD_CATEGORIAS] Resultado - ok: ${r.ok}, error: ${r.error}');
     if (!mounted) return;
     setState(() {
       _categorias  = r.data ?? [];
       _loadingCats = false;
     });
-    print('🔵 [LOAD_CATEGORIAS] Categorías cargadas: ${_categorias.length}');
   }
 
   Future<void> _loadMarcas() async {
-    print('🔵 [LOAD_MARCAS] Iniciando carga de marcas');
     final r = await ProductService.getMarcas();
-    print('🔵 [LOAD_MARCAS] Resultado - ok: ${r.ok}, error: ${r.error}');
-    print('🔵 [LOAD_MARCAS] Data recibida: ${r.data}');
     if (!mounted) return;
-    setState(() {
-      _marcas = r.data ?? [];
-      print('🔵 [LOAD_MARCAS] Marcas en estado: ${_marcas.length}');
-    });
+    setState(() => _marcas = r.data ?? []);
+  }
+
+  // Cargar promociones y mapear descuentos
+  Future<void> _cargarPromociones() async {
+    print('🔵 [PROMOCIONES] Iniciando carga de promociones');
+    print('🔵 [PROMOCIONES] Productos disponibles: ${_productos.length}');
+    
+    final result = await PromocionService.getPromociones();
+    print('🔵 [PROMOCIONES] Resultado ok: ${result.ok}, data length: ${result.data?.length}');
+    
+    if (result.ok && result.data != null) {
+      final Map<int, double> descuentos = {};
+      for (final promo in result.data!) {
+        print('🔵 [PROMOCIONES] Procesando promo: ${promo.nombre} - scope: ${promo.scope}');
+        if (promo.scope == 'producto' && promo.idproducto != null) {
+          descuentos[promo.idproducto!] = promo.porcentaje;
+          print('🔵 [PROMOCIONES] Producto ${promo.idproducto} → ${promo.porcentaje * 100}%');
+        } else if (promo.scope == 'categoria' && promo.idcategoria != null) {
+          for (final producto in _productos) {
+            if (producto.idcategoria == promo.idcategoria) {
+              descuentos[producto.idproducto] = promo.porcentaje;
+              print('🔵 [PROMOCIONES] Producto ${producto.idproducto} (cat ${promo.idcategoria}) → ${promo.porcentaje * 100}%');
+            }
+          }
+        } else if (promo.scope == 'global') {
+          for (final producto in _productos) {
+            descuentos[producto.idproducto] = promo.porcentaje;
+            print('🔵 [PROMOCIONES] Producto ${producto.idproducto} (global) → ${promo.porcentaje * 100}%');
+          }
+        }
+      }
+      setState(() {
+        _descuentosPorProducto = descuentos;
+      });
+      print('🔵 [PROMOCIONES] Total descuentos aplicados: ${_descuentosPorProducto.length}');
+    }
   }
 
   Future<void> _loadProductos() async {
@@ -89,6 +113,10 @@ class _HomeScreenState extends State<HomeScreen> {
         _productos    = result.data ?? [];
         _loadingProds = false;
       });
+      
+      // Cargar promociones después de tener productos
+      await _cargarPromociones();
+      
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -100,7 +128,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onCategoryTap(int index, int? idCat) {
-    print('🟢 [CATEGORY_TAP] index: $index, idCat: $idCat');
     setState(() {
       _selectedCatIndex = index;
       _selectedCatId = idCat;
@@ -131,7 +158,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _abrirFiltros() async {
-    print('🟢 [ABRIR_FILTROS] Marcas disponibles: ${_marcas.length}');
     final nuevos = await showModalBottomSheet<FiltrosProducto>(
       context: context,
       isScrollControlled: true,
@@ -142,7 +168,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (nuevos != null && mounted) {
-      print('🟢 [ABRIR_FILTROS] Filtros aplicados - idMarca: ${nuevos.idMarca}');
       setState(() {
         _filtros = FiltrosProducto(
           search: _filtros.search,
@@ -266,6 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           delegate: SliverChildBuilderDelegate(
                             (ctx, i) {
                               final p = _productos[i];
+                              final descuento = _descuentosPorProducto[p.idproducto];
                               return ValueListenableBuilder<Set<int>>(
                                 valueListenable: FavoritesService.favoriteIds,
                                 builder: (context, favIds, _) => ProductCard(
@@ -274,6 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   imageUrl:    p.imagenPrincipal ?? '',
                                   isFavorite:  favIds.contains(p.idproducto),
                                   stock:       p.stock,
+                                  descuento:   descuento,
                                   onTap:       () => _goToProductDetail(p),
                                   onAddToCart: () => _addToCart(p),
                                   onFavorite:  () => _toggleFavorite(p),
@@ -763,7 +790,6 @@ class _FilterSheetState extends State<_FilterSheet> {
       widget.filtrosActuales.precioMin ?? 0,
       widget.filtrosActuales.precioMax ?? _maxPrecio,
     );
-    print('🟢 [FILTER_SHEET] Marcas recibidas: ${widget.marcas.length}');
   }
 
   bool get _rangoPorDefecto =>

@@ -215,7 +215,7 @@ class CategoryChip extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────────────────────
-// Product Card
+// Product Card (CON DESCUENTOS - SIN "AHORRAS")
 // ──────────────────────────────────────────────────────────────
 class ProductCard extends StatelessWidget {
   final String name;
@@ -226,6 +226,7 @@ class ProductCard extends StatelessWidget {
   final bool isNew;
   final bool isFavorite;
   final int stock;
+  final double? descuento;
   final VoidCallback? onTap;
   final VoidCallback? onAddToCart;
   final VoidCallback? onFavorite;
@@ -240,6 +241,7 @@ class ProductCard extends StatelessWidget {
     this.isNew = false,
     this.isFavorite = false,
     this.stock = 1,
+    this.descuento,
     this.onTap,
     this.onAddToCart,
     this.onFavorite,
@@ -258,6 +260,8 @@ class ProductCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final sinStock = stock <= 0;
+    final tieneDescuento = descuento != null && descuento! > 0;
+    final precioFinal = tieneDescuento ? price * (1 - descuento!) : price;
     
     return GestureDetector(
       onTap: onTap,
@@ -321,36 +325,48 @@ class ProductCard extends StatelessWidget {
                         },
                       ),
                     ),
-                    if (sinStock)
-                      Positioned.fill(
+                    
+                    // Badge de descuento
+                    if (tieneDescuento && !sinStock)
+                      Positioned(
+                        top: 8,
+                        left: 8,
                         child: Container(
-                          color: Colors.black.withOpacity(0.35),
-                          child: Center(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.72),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.white.withOpacity(0.25)),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
                               ),
-                              child: const Text(
-                                'Sin existencia',
-                                style: TextStyle(
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.local_offer_rounded, size: 12, color: Colors.white),
+                              const SizedBox(width: 4),
+                              Text(
+                                '-${(descuento! * 100).toInt()}%',
+                                style: const TextStyle(
                                   fontFamily: AppTextStyles.fontFamily,
                                   fontSize: 11,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w800,
                                   color: Colors.white,
-                                  letterSpacing: 0.3,
                                 ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
                       ),
+                    
                     if ((badge != null || isNew) && !sinStock)
                       Positioned(
-                        top: AppDimensions.paddingS,
-                        left: AppDimensions.paddingS,
+                        top: 8,
+                        left: tieneDescuento ? 75 : 8,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
@@ -370,6 +386,7 @@ class ProductCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                    
                     Positioned(
                       top: AppDimensions.paddingS,
                       right: AppDimensions.paddingS,
@@ -397,6 +414,33 @@ class ProductCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    
+                    if (sinStock)
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withOpacity(0.35),
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.72),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.white.withOpacity(0.25)),
+                              ),
+                              child: const Text(
+                                'Sin existencia',
+                                style: TextStyle(
+                                  fontFamily: AppTextStyles.fontFamily,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -416,7 +460,29 @@ class ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  if (originalPrice != null) ...[
+                  
+                  // ✅ PRECIO CON DESCUENTO - SIN "AHORRAS"
+                  if (tieneDescuento && !sinStock) ...[
+                    Row(
+                      children: [
+                        Text(
+                          _formatPrice(precioFinal),
+                          style: textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.success,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _formatPrice(price),
+                          style: textTheme.bodySmall?.copyWith(
+                            decoration: TextDecoration.lineThrough,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (originalPrice != null) ...[
                     Text(
                       _formatPrice(originalPrice!),
                       style: textTheme.bodySmall?.copyWith(
@@ -424,18 +490,34 @@ class ProductCard extends StatelessWidget {
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatPrice(price),
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: sinStock ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
+                      ),
+                    ),
+                  ] else ...[
+                    Text(
+                      _formatPrice(price),
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: sinStock ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
+                      ),
+                    ),
                   ],
+                  
+                  const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Flexible(
                         child: Text(
-                          _formatPrice(price),
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: sinStock ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
+                          sinStock ? 'Sin stock' : 'Stock: $stock',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: sinStock ? colorScheme.error : colorScheme.onSurfaceVariant,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       GestureDetector(

@@ -21,7 +21,7 @@ class ApiConfig {
   static String productosPorCategoria(int id) => '$baseUrl/categorias/$id/productos';
 
   // ── Marcas (NUEVO)
-  static const String marcas           = '$baseUrl/marcas';  // ← AGREGAR ESTA LÍNEA
+  static const String marcas           = '$baseUrl/marcas'; 
 
   // ── Carrito
   static const String carrito          = '$baseUrl/carrito';

@@ -13,6 +13,7 @@ import direccionRoutes  from "./direccionRoutes.js";
 import resenasRoutes   from "./resenasRoutes.js";
 import soporteRoutes   from "./soporteRoutes.js";
 import marcasRoutes    from "./marcasRoutes.js";
+import promocionesRoutes from "./promocionesRoutes.js";
 
 const router = express.Router();
 
@@ -58,5 +59,8 @@ router.post("/refresh", (req, res, next) => usuarioRoutes(req, res, next));
 
 // ── Reseñas y calificaciones ───────────────────────────────────
 router.use("/resenas", resenasRoutes);
+
+// ── Promociones ───────────────────────────────────────────────
+router.use("/promociones",     promocionesRoutes);
 
 export default router;
