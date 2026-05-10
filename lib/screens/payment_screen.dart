@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../services/mercadopago_service.dart';
+import '../services/promocion_service.dart';
 import '../utils/formatters.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -18,8 +19,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
   List<ProductoCheckout> _productos   = [];
   String                 _source      = 'carrito';
   int?                   _iddireccion;
+  
+  Map<int, double> _descuentosPorProducto = {};
 
-  double get _total => _productos.fold(0, (s, p) => s + p.precio * p.cantidad);
+  double get _totalOriginal => _productos.fold(0, (s, p) => s + p.precio * p.cantidad);
+  double get _totalConDescuento => _productos.fold(0, (s, p) {
+    final descuento = _descuentosPorProducto[p.id] ?? 0;
+    final precioConDescuento = p.precio * (1 - descuento);
+    return s + precioConDescuento * p.cantidad;
+  });
+  double get _ahorroTotal => _totalOriginal - _totalConDescuento;
+  bool get _tieneDescuento => _ahorroTotal > 0;
 
   final List<_PaymentMethod> _methods = [
     _PaymentMethod(id: 0, title: 'Pagar con MercadoPago', icon: Icons.credit_card_rounded, color: const Color(0xFF009EE3), available: true),
@@ -35,15 +45,60 @@ class _PaymentScreenState extends State<PaymentScreen> {
       _productos   = (args['productos'] as List<ProductoCheckout>?) ?? [];
       _source      = args['source'] as String? ?? 'carrito';
       _iddireccion = args['iddireccion'] as int?;
+      _cargarPromociones();
     }
   }
 
+  // Cargar promociones y aplicarlas a los productos
+  Future<void> _cargarPromociones() async {
+    final result = await PromocionService.getPromociones();
+    if (!mounted) return;
+    
+    if (result.ok && result.data != null) {
+      final Map<int, double> descuentos = {};
+      
+      for (final promo in result.data!) {
+        if (promo.scope == 'producto' && promo.idproducto != null) {
+          descuentos[promo.idproducto!] = promo.porcentaje;
+        } else if (promo.scope == 'global') {
+          for (final producto in _productos) {
+            if (!descuentos.containsKey(producto.id) || 
+                (descuentos[producto.id] ?? 0) < promo.porcentaje) {
+              descuentos[producto.id] = promo.porcentaje;
+            }
+          }
+        }
+      }
+      
+      setState(() {
+        _descuentosPorProducto = descuentos;
+      });
+    }
+  }
+
+  // Obtener precio con descuento para un producto
+  double _getPrecioConDescuento(ProductoCheckout producto) {
+    final descuento = _descuentosPorProducto[producto.id] ?? 0;
+    if (descuento > 0) {
+      return producto.precio * (1 - descuento);
+    }
+    return producto.precio;
+  }
+
   Future<void> _pagar() async {
-    if (_selectedMethod != 0) return; // Solo MercadoPago activo
+    if (_selectedMethod != 0) return;
     setState(() => _loading = true);
 
+    // Crear lista de productos con precios actualizados (con descuento)
+    final productosConDescuento = _productos.map((p) => ProductoCheckout(
+      id: p.id,
+      nombre: p.nombre,
+      precio: _getPrecioConDescuento(p),
+      cantidad: p.cantidad,
+    )).toList();
+
     final r = await MercadoPagoService.crearPreferencia(
-      productos:   _productos,
+      productos:   productosConDescuento,
       source:      _source,
       iddireccion: _iddireccion,
     );
@@ -66,7 +121,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  void _showSnack(String msg) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating));
+  void _showSnack(String msg) => ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating)
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -238,31 +295,78 @@ class _PaymentScreenState extends State<PaymentScreen> {
         children: [
           Text('Resumen del pedido', style: textTheme.headlineMedium),
           const SizedBox(height: AppDimensions.paddingS),
-          ..._productos.map((p) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(child: Text('${p.nombre} (x${p.cantidad})', 
-                  style: textTheme.bodySmall, 
-                  overflow: TextOverflow.ellipsis
-                )),
-                Text(Formatters.precio(p.precio * p.cantidad), 
-                  style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)
-                ),
-              ],
-            ),
-          )),
+          
+          // Lista de productos - SOLO EL PRECIO CON DESCUENTO
+          ..._productos.map((p) {
+            final descuento = _descuentosPorProducto[p.id] ?? 0;
+            final precioConDescuento = _getPrecioConDescuento(p);
+            
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${p.nombre} (x${p.cantidad})', 
+                      style: textTheme.bodySmall, 
+                      overflow: TextOverflow.ellipsis
+                    ),
+                  ),
+                  Text(
+                    Formatters.precio(precioConDescuento * p.cantidad),
+                    style: textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: descuento > 0 ? AppColors.success : null,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          
           Divider(height: AppDimensions.paddingM, color: colorScheme.outline),
+          
+          // Total a pagar
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Total a pagar:', style: textTheme.titleMedium),
-              Text(Formatters.precio(_total), 
-                style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)
+              Text(
+                Formatters.precio(_totalConDescuento), 
+                style: textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: _tieneDescuento ? AppColors.success : null,
+                ),
               ),
             ],
           ),
+          
+          // Badge de ahorro (opcional)
+          if (_tieneDescuento) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+              decoration: BoxDecoration(
+                color: AppColors.success.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.local_offer_rounded, size: 14, color: AppColors.success),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Estás ahorrando ${Formatters.precio(_ahorroTotal)}',
+                    style: textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -104,7 +104,7 @@ class Producto {
 }
 
 // ══════════════════════════════════════════════════════════════
-// CARRITO ITEM
+// CARRITO ITEM (ACTUALIZADO CON idcategoria)
 // ══════════════════════════════════════════════════════════════
 class CarritoItem {
   final int idproducto;
@@ -113,10 +113,16 @@ class CarritoItem {
   int cantidad;
   final double subtotal;
   final String? imagenUrl;
+  final int? idcategoria; // ← AGREGADO
 
   CarritoItem({
-    required this.idproducto, required this.nombre, required this.precio,
-    required this.cantidad, required this.subtotal, this.imagenUrl,
+    required this.idproducto, 
+    required this.nombre, 
+    required this.precio,
+    required this.cantidad, 
+    required this.subtotal, 
+    this.imagenUrl,
+    this.idcategoria, // ← AGREGADO
   });
 
   factory CarritoItem.fromJson(Map<String, dynamic> j) => CarritoItem(
@@ -126,6 +132,7 @@ class CarritoItem {
     cantidad: j['cantidad'] ?? 1,
     subtotal: double.tryParse(j['subtotal'].toString()) ?? 0,
     imagenUrl: j['imagen_url'],
+    idcategoria: j['idcategoria'] as int?, // ← AGREGADO
   );
 
   double get totalCalculado => precio * cantidad;

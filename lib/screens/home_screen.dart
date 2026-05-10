@@ -342,6 +342,35 @@ class _HomeScreenState extends State<HomeScreen> {
           horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingS),
       child: Row(
         children: [
+          GestureDetector(
+            onTap: () {
+              _limpiarFiltros();
+            },
+            child: Image.asset(
+              'assets/images/logo_dulce_hogar.png',
+              height: 70,
+              width: 70,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 40,
+                  width: 40,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.store_rounded,
+                    color: colorScheme.primary,
+                    size: 24,
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: AppDimensions.paddingS),
+          
+          // Barra de búsqueda
           Expanded(
             child: TextField(
               controller: _searchController,
@@ -357,6 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: AppDimensions.paddingS),
 
+          // Botón de filtros
           GestureDetector(
             onTap: _abrirFiltros,
             child: Stack(
@@ -397,44 +427,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          const SizedBox(width: AppDimensions.paddingS),
-
-          GestureDetector(
-            onTap: () => Navigator.of(context).pushNamed('/cart'),
-            child: ValueListenableBuilder<int>(
-              valueListenable: CartService.cartCount,
-              builder: (context, count, _) => Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 40, height: 40,
-                    decoration: BoxDecoration(
-                        color: colorScheme.primary,
-                        borderRadius:
-                            BorderRadius.circular(AppDimensions.radiusS)),
-                    child: const Icon(Icons.shopping_cart_outlined,
-                        color: Colors.white, size: 22),
-                  ),
-                  if (count > 0)
-                    Positioned(
-                      right: -4, top: -4,
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                            color: colorScheme.error, shape: BoxShape.circle),
-                        child: Text(
-                          count > 99 ? '99+' : '$count',
-                          style: const TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
+          // Botón de carrito ELIMINADO
         ],
       ),
     );

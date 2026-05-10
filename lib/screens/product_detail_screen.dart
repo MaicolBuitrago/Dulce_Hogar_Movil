@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../services/cart_service.dart';
 import '../services/favorites_service.dart';
+import '../services/promocion_service.dart';
 import '../utils/formatters.dart';
 import '../widgets/app_widgets.dart';
 import '../services/review_service.dart';
@@ -23,6 +24,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   bool _isFavorite        = false;
   bool _addingToCart      = false;
   bool _togglingFav       = false;
+  double? _descuento;
 
   late final AnimationController _animCtrl;
   late final Animation<double>   _fadeAnim;
@@ -31,10 +33,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   final _pageController = PageController();
   Producto? _producto;
 
-  // ── Estado de reseñas ─────────────────────────────────────
   ResumenResenas _resumen      = ResumenResenas.vacio();
   bool           _loadingRes   = true;
-  String?        _miCedula;   // cédula del usuario logueado
+  String?        _miCedula;
 
   @override
   void initState() {
@@ -52,8 +53,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     if (p != null && p.idproducto != _producto?.idproducto) {
       _producto = p;
       _checkFavorito();
+      _cargarPromocion(p.idproducto);
       _cargarResenas(p.idproducto);
       _animCtrl.forward(from: 0);
+    }
+  }
+
+  Future<void> _cargarPromocion(int idproducto) async {
+    final result = await PromocionService.getPromociones();
+    if (!mounted) return;
+    
+    if (result.ok && result.data != null) {
+      double? descuentoAplicado;
+      for (final promo in result.data!) {
+        if (promo.scope == 'producto' && promo.idproducto == idproducto) {
+          descuentoAplicado = promo.porcentaje;
+          break;
+        } else if (promo.scope == 'global') {
+          descuentoAplicado = promo.porcentaje;
+        }
+      }
+      setState(() {
+        _descuento = descuentoAplicado;
+      });
     }
   }
 
@@ -93,6 +115,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
     _pageController.dispose();
     super.dispose();
   }
+
+  double get _precioConDescuento {
+    if (_producto == null) return 0;
+    if (_descuento != null && _descuento! > 0) {
+      return _producto!.precio * (1 - _descuento!);
+    }
+    return _producto!.precio;
+  }
+
+  double get _subtotalConDescuento => _precioConDescuento * _selectedQuantity;
+  double get _subtotalOriginal => (_producto?.precio ?? 0) * _selectedQuantity;
+  bool get _tieneDescuento => _descuento != null && _descuento! > 0;
 
   Future<void> _addToCart() async {
     if (_producto == null) return;
@@ -159,9 +193,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       bottomNavigationBar: const SharedBottomNav(),
       body: Stack(
         children: [
-          // Mancha decorativa fondo
           Positioned(
-            bottom: 120, right: -80,
+            bottom: 120, right: 16,
             child: Container(
               width: 240, height: 240,
               decoration: BoxDecoration(
@@ -255,22 +288,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           Center(child: Icon(Icons.image_outlined, size: 72, color: colorScheme.onSurfaceVariant)),
                     ),
                   ),
-          ),
-          Positioned(
-            top: 0, left: 0, right: 0, height: 90,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(28),
-                  bottomRight: Radius.circular(28),
-                ),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.black.withOpacity(0.18), Colors.transparent],
-                ),
-              ),
-            ),
           ),
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
@@ -435,14 +452,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                   color: p.disponible ? AppColors.primaryDark : colorScheme.onSurfaceVariant,
                 )),
                 const SizedBox(height: 2),
-                Text(
-                  Formatters.precio(p.precio),
-                  style: TextStyle(
-                    fontFamily: 'Nunito', fontSize: 28, fontWeight: FontWeight.w800,
-                    color: p.disponible ? AppColors.priceColor : colorScheme.onSurfaceVariant,
-                    letterSpacing: -0.5,
+                if (_tieneDescuento) ...[
+                  Text(
+                    Formatters.precio(p.precio),
+                    style: TextStyle(
+                      fontFamily: 'Nunito', fontSize: 18, fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurfaceVariant,
+                      decoration: TextDecoration.lineThrough,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 2),
+                  Text(
+                    Formatters.precio(_precioConDescuento),
+                    style: TextStyle(
+                      fontFamily: 'Nunito', fontSize: 28, fontWeight: FontWeight.w800,
+                      color: AppColors.success,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ] else ...[
+                  Text(
+                    Formatters.precio(p.precio),
+                    style: TextStyle(
+                      fontFamily: 'Nunito', fontSize: 28, fontWeight: FontWeight.w800,
+                      color: p.disponible ? AppColors.priceColor : colorScheme.onSurfaceVariant,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -587,13 +624,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                     Text('Subtotal', style: TextStyle(
                       fontFamily: 'Nunito', fontSize: 11, color: colorScheme.onSurfaceVariant,
                     )),
-                    Text(
-                      Formatters.precio(p.precio * _selectedQuantity),
-                      style: TextStyle(
-                        fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w800,
-                        color: colorScheme.onSurface,
+                    if (_tieneDescuento) ...[
+                      Text(
+                        Formatters.precio(_subtotalOriginal),
+                        style: TextStyle(
+                          fontFamily: 'Nunito', fontSize: 12, fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurfaceVariant,
+                          decoration: TextDecoration.lineThrough,
+                        ),
                       ),
-                    ),
+                      Text(
+                        Formatters.precio(_subtotalConDescuento),
+                        style: TextStyle(
+                          fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w800,
+                          color: AppColors.success,
+                        ),
+                      ),
+                    ] else ...[
+                      Text(
+                        Formatters.precio(_subtotalConDescuento),
+                        style: TextStyle(
+                          fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w800,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],
@@ -715,7 +770,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                 Navigator.of(context).pushNamed('/delivery-address', arguments: {
                   'productos': [ProductoCheckout(
                     id: p.idproducto, nombre: p.nombre,
-                    precio: p.precio, cantidad: _selectedQuantity,
+                    precio: _precioConDescuento, cantidad: _selectedQuantity,
                   )]
                 });
               } : null,
@@ -736,11 +791,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           blurRadius: 12, offset: const Offset(0, 4)),
                     ] : [],
                   ),
-                  child: const Center(
-                    child: Text('Comprar ahora', style: TextStyle(
-                      fontFamily: 'Nunito', fontSize: 14, fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    )),
+                  child: Center(
+                    child: _tieneDescuento
+                        ? RichText(
+                            text: TextSpan(
+                              children: [
+                                const TextSpan(
+                                  text: 'Comprar ahora ',
+                                  style: TextStyle(
+                                    fontFamily: 'Nunito', fontSize: 14, fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: Formatters.precio(_precioConDescuento),
+                                  style: const TextStyle(
+                                    fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : const Text('Comprar ahora', style: TextStyle(
+                            fontFamily: 'Nunito', fontSize: 14, fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          )),
                   ),
                 ),
               ),
@@ -788,7 +864,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
 }
 
 // ══════════════════════════════════════════════════════════════
-// SECCIÓN DE RESEÑAS — se agrega al final del detalle
+// SECCIÓN DE RESEÑAS
 // ══════════════════════════════════════════════════════════════
 class _ReviewSection extends StatefulWidget {
   final ResumenResenas resumen;
@@ -812,7 +888,6 @@ class _ReviewSection extends StatefulWidget {
 class _ReviewSectionState extends State<_ReviewSection> {
   bool _mostrarFormulario = false;
 
-  // ── Helpers ──────────────────────────────────────────────────
   bool get _yaReseno => widget.miCedula != null &&
       widget.resumen.resenas.any((r) => r.cedula == widget.miCedula);
 
@@ -871,7 +946,6 @@ class _ReviewSectionState extends State<_ReviewSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Encabezado con promedio ─────────────────────────
           Row(
             children: [
               Container(
@@ -907,7 +981,6 @@ class _ReviewSectionState extends State<_ReviewSection> {
             ],
           ),
 
-          // ── Loading ─────────────────────────────────────────
           if (widget.loading) ...[
             const SizedBox(height: 20),
             const Center(
@@ -916,7 +989,6 @@ class _ReviewSectionState extends State<_ReviewSection> {
             const SizedBox(height: 20),
           ]
 
-          // ── Sin reseñas ──────────────────────────────────────
           else if (widget.resumen.total == 0 && !_mostrarFormulario) ...[
             const SizedBox(height: 16),
             Center(
@@ -944,11 +1016,10 @@ class _ReviewSectionState extends State<_ReviewSection> {
             ),
           ]
 
-          // ── Lista de reseñas ──────────────────────────────────
           else if (!_mostrarFormulario) ...[
             const SizedBox(height: 12),
             ...widget.resumen.resenas
-                .take(3) // mostrar máx 3 — evita scroll infinito
+                .take(3)
                 .map((r) => _ResenaCard(
                       resena:  r,
                       esMia:   r.cedula == widget.miCedula,
@@ -967,7 +1038,6 @@ class _ReviewSectionState extends State<_ReviewSection> {
               ),
           ],
 
-          // ── Formulario nueva reseña ───────────────────────────
           if (_mostrarFormulario)
             _NuevaResenaForm(
               idproducto: widget.idproducto,
@@ -978,7 +1048,6 @@ class _ReviewSectionState extends State<_ReviewSection> {
               onCancelar: () => setState(() => _mostrarFormulario = false),
             ),
 
-          // ── Botón dejar reseña ────────────────────────────────
           if (!widget.loading && !_mostrarFormulario) ...[
             const SizedBox(height: 14),
             if (widget.miCedula == null)
@@ -1029,7 +1098,6 @@ class _ReviewSectionState extends State<_ReviewSection> {
   }
 }
 
-// ── Card de una reseña individual ────────────────────────────
 class _ResenaCard extends StatelessWidget {
   final Resena       resena;
   final bool         esMia;
@@ -1067,7 +1135,6 @@ class _ResenaCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Avatar inicial
               Container(
                 width: 32, height: 32,
                 decoration: BoxDecoration(
@@ -1159,7 +1226,6 @@ class _ResenaCard extends StatelessWidget {
   }
 }
 
-// ── Formulario para nueva reseña ─────────────────────────────
 class _NuevaResenaForm extends StatefulWidget {
   final int          idproducto;
   final VoidCallback onPublicada;
@@ -1236,7 +1302,6 @@ class _NuevaResenaFormState extends State<_NuevaResenaForm> {
                 color: colorScheme.onSurface)),
         const SizedBox(height: 10),
 
-        // Estrellas interactivas
         Row(
           children: List.generate(5, (i) {
             final llena = i < _stars;
@@ -1255,7 +1320,6 @@ class _NuevaResenaFormState extends State<_NuevaResenaForm> {
         ),
         const SizedBox(height: 14),
 
-        // Campo de comentario
         TextField(
           controller: _ctrl,
           maxLines:   4,
@@ -1274,7 +1338,6 @@ class _NuevaResenaFormState extends State<_NuevaResenaForm> {
         ),
         const SizedBox(height: 12),
 
-        // Botones
         Row(
           children: [
             Expanded(
@@ -1309,9 +1372,8 @@ class _NuevaResenaFormState extends State<_NuevaResenaForm> {
   }
 }
 
-// ── Widget de estrellas de solo lectura ───────────────────────
 class _StarDisplay extends StatelessWidget {
-  final double valor; // 0.0 - 5.0
+  final double valor;
   final double size;
 
   const _StarDisplay({required this.valor, this.size = 16});

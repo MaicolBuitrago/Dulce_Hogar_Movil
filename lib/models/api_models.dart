@@ -154,7 +154,7 @@ class CategoriaModel {
 }
 
 // ──────────────────────────────────────────────────────────────
-// CARRITO
+// CARRITO (ACTUALIZADO CON idcategoria)
 // ──────────────────────────────────────────────────────────────
 class CarritoItemModel {
   final int idproducto;
@@ -163,6 +163,7 @@ class CarritoItemModel {
   int cantidad;
   final double subtotal;
   final String? imagenUrl;
+  final int? idcategoria; // ← AGREGADO: categoría del producto
 
   CarritoItemModel({
     required this.idproducto,
@@ -171,6 +172,7 @@ class CarritoItemModel {
     required this.cantidad,
     required this.subtotal,
     this.imagenUrl,
+    this.idcategoria, // ← AGREGADO
   });
 
   factory CarritoItemModel.fromJson(Map<String, dynamic> json) {
@@ -181,6 +183,7 @@ class CarritoItemModel {
       cantidad: json['cantidad'] as int? ?? 1,
       subtotal: double.tryParse(json['subtotal']?.toString() ?? '0') ?? 0,
       imagenUrl: json['imagen_url']?.toString(),
+      idcategoria: json['idcategoria'] as int?, // ← AGREGADO
     );
   }
 

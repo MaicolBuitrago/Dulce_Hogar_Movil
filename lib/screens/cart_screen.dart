@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../widgets/app_widgets.dart';
 import '../models/models.dart';
 import '../services/cart_service.dart';
+import '../services/promocion_service.dart';
 import '../utils/formatters.dart';
 
 class CartScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class _CartScreenState extends State<CartScreen> {
   List<CarritoItem> _items = [];
   bool _loading            = true;
   bool _processingId       = false;
+  Map<int, double> _descuentosPorProducto = {}; // Mapa de descuentos
 
   @override
   void initState() {
@@ -31,6 +33,83 @@ class _CartScreenState extends State<CartScreen> {
       _items   = r.data ?? [];
       _loading = false;
     });
+    // Después de cargar los items, cargar promociones
+    if (_items.isNotEmpty) {
+      await _cargarPromociones();
+    }
+  }
+
+  // Cargar promociones y aplicarlas a los productos del carrito
+  Future<void> _cargarPromociones() async {
+    print('🔵 [PROMOCIONES CARRITO] Iniciando carga de promociones');
+    print('🔵 [PROMOCIONES CARRITO] Items en carrito: ${_items.length}');
+    
+    final result = await PromocionService.getPromociones();
+    print('🔵 [PROMOCIONES CARRITO] Resultado ok: ${result.ok}, data length: ${result.data?.length}');
+    
+    if (result.ok && result.data != null) {
+      final Map<int, double> descuentos = {};
+      
+      // Primero, obtener todos los productos con sus categorías
+      final Map<int, int?> categoriasPorProducto = {};
+      for (final item in _items) {
+        // Aquí necesitamos la categoría de cada producto
+        // Si CarritoItem no tiene idcategoria, necesitamos obtenerlo
+        // Por ahora asumimos que podemos obtenerlo del producto
+        // Si no está disponible, solo aplicamos promociones por producto o globales
+        categoriasPorProducto[item.idproducto] = item.idcategoria;
+      }
+      
+      for (final promo in result.data!) {
+        print('🔵 [PROMOCIONES CARRITO] Procesando promo: ${promo.nombre} - scope: ${promo.scope}');
+        
+        if (promo.scope == 'producto' && promo.idproducto != null) {
+          // Promoción específica de producto
+          descuentos[promo.idproducto!] = promo.porcentaje;
+          print('🔵 [PROMOCIONES CARRITO] Producto ${promo.idproducto} → ${promo.porcentaje * 100}% descuento');
+          
+        } else if (promo.scope == 'categoria' && promo.idcategoria != null) {
+          // Promoción por categoría - aplicar a todos los productos de esa categoría
+          for (final item in _items) {
+            if (item.idcategoria == promo.idcategoria) {
+              descuentos[item.idproducto] = promo.porcentaje;
+              print('🔵 [PROMOCIONES CARRITO] Producto ${item.idproducto} (cat ${promo.idcategoria}) → ${promo.porcentaje * 100}% descuento');
+            }
+          }
+          
+        } else if (promo.scope == 'global') {
+          // Promoción global - aplicar a todos los productos
+          for (final item in _items) {
+            // Solo aplicar si no tiene ya un descuento específico mayor
+            if (!descuentos.containsKey(item.idproducto) || 
+                (descuentos[item.idproducto] ?? 0) < promo.porcentaje) {
+              descuentos[item.idproducto] = promo.porcentaje;
+              print('🔵 [PROMOCIONES CARRITO] Producto ${item.idproducto} (global) → ${promo.porcentaje * 100}% descuento');
+            }
+          }
+        }
+      }
+      
+      setState(() {
+        _descuentosPorProducto = descuentos;
+      });
+      print('🔵 [PROMOCIONES CARRITO] Total descuentos aplicados: ${_descuentosPorProducto.length}');
+    }
+  }
+
+  // Calcular precio con descuento
+  double _getPrecioConDescuento(CarritoItem item) {
+    final descuento = _descuentosPorProducto[item.idproducto];
+    if (descuento != null && descuento > 0) {
+      return item.precio * (1 - descuento);
+    }
+    return item.precio;
+  }
+
+  // Calcular subtotal con descuento
+  double _getSubtotalConDescuento(CarritoItem item) {
+    final precioConDescuento = _getPrecioConDescuento(item);
+    return precioConDescuento * item.cantidad;
   }
 
   Future<void> _updateQty(int idproducto, int cantidad) async {
@@ -41,6 +120,12 @@ class _CartScreenState extends State<CartScreen> {
       for (final item in _items)
         if (item.imagenUrl != null) item.idproducto: item.imagenUrl!
     };
+    
+    // También guardar las categorías
+    final categoriaCache = {
+      for (final item in _items)
+        if (item.idcategoria != null) item.idproducto: item.idcategoria!
+    };
 
     final r = await CartService.actualizar(idproducto: idproducto, cantidad: cantidad);
     if (!mounted) return;
@@ -50,18 +135,19 @@ class _CartScreenState extends State<CartScreen> {
       if (r.ok) {
         // El backend no devuelve imagenUrl en el PUT — reinyectarla desde el cache
         _items = (r.data ?? []).map((item) {
-          if (item.imagenUrl == null && imageCache.containsKey(item.idproducto)) {
-            return CarritoItem(
-              idproducto: item.idproducto,
-              nombre:     item.nombre,
-              precio:     item.precio,
-              cantidad:   item.cantidad,
-              subtotal:   item.subtotal,
-              imagenUrl:  imageCache[item.idproducto],
-            );
-          }
-          return item;
+          return CarritoItem(
+            idproducto: item.idproducto,
+            nombre:     item.nombre,
+            precio:     item.precio,
+            cantidad:   item.cantidad,
+            subtotal:   item.subtotal,
+            imagenUrl:  imageCache[item.idproducto],
+            idcategoria: categoriaCache[item.idproducto], // Reinyectar categoría
+          );
         }).toList();
+        
+        // Recargar promociones después de actualizar el carrito
+        _cargarPromociones();
       }
     });
 
@@ -84,16 +170,23 @@ class _CartScreenState extends State<CartScreen> {
     setState(() => _loading = true);
     await CartService.vaciar();
     if (!mounted) return;
-    setState(() { _items = []; _loading = false; });
+    setState(() { 
+      _items = []; 
+      _loading = false;
+      _descuentosPorProducto = {};
+    });
   }
 
   void _showSnack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating));
   }
 
-  double get _subtotal => _items.fold(0, (s, i) => s + i.totalCalculado);
-  double get _shipping  => _subtotal > 1500000 ? 0 : 50000;
-  double get _total     => _subtotal + _shipping;
+  // Calcular subtotal total con descuentos aplicados
+  double get _subtotalConDescuento => _items.fold(0, (s, i) => s + _getSubtotalConDescuento(i));
+  double get _subtotalOriginal => _items.fold(0, (s, i) => s + (i.precio * i.cantidad));
+  double get _ahorroTotal => _subtotalOriginal - _subtotalConDescuento;
+  double get _shipping => _subtotalConDescuento > 1500000 ? 0 : 50000;
+  double get _total => _subtotalConDescuento + _shipping;
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +206,9 @@ class _CartScreenState extends State<CartScreen> {
             else
               Expanded(
                 child: RefreshIndicator(
-                  onRefresh: _loadCart,
+                  onRefresh: () async {
+                    await _loadCart();
+                  },
                   color: AppColors.primary,
                   child: CustomScrollView(
                     physics: const BouncingScrollPhysics(),
@@ -132,6 +227,7 @@ class _CartScreenState extends State<CartScreen> {
                               padding: const EdgeInsets.only(bottom: AppDimensions.paddingM),
                               child: _CartItemCard(
                                 item: _items[i],
+                                descuento: _descuentosPorProducto[_items[i].idproducto],
                                 processing: _processingId,
                                 onIncrement: () => _updateQty(_items[i].idproducto, _items[i].cantidad + 1),
                                 onDecrement: () => _updateQty(_items[i].idproducto, _items[i].cantidad - 1),
@@ -142,10 +238,50 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                         ),
                       ),
-                      if (_shipping > 0)
+                      // Mostrar resumen de ahorros
+                      if (_ahorroTotal > 0)
                         SliverToBoxAdapter(
                           child: Container(
                             margin: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM),
+                            padding: const EdgeInsets.all(AppDimensions.paddingM),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+                              border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.local_offer_rounded, color: AppColors.success, size: 20),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '¡Ahorro total!',
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: AppColors.success,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Estás ahorrando ${Formatters.precio(_ahorroTotal)}',
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: AppColors.success,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      if (_shipping > 0)
+                        SliverToBoxAdapter(
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingS),
                             padding: const EdgeInsets.all(AppDimensions.paddingM),
                             decoration: BoxDecoration(
                               color: AppColors.primaryLight.withOpacity(0.15),
@@ -156,7 +292,7 @@ class _CartScreenState extends State<CartScreen> {
                               children: [
                                 const Icon(Icons.local_shipping_outlined, color: AppColors.primary, size: 20),
                                 const SizedBox(width: 10),
-                                Expanded(child: Text('Agrega ${Formatters.precio(1500000 - _subtotal)} más para envío gratis', style: textTheme.bodySmall?.copyWith(color: AppColors.primaryDark, fontWeight: FontWeight.w600))),
+                                Expanded(child: Text('Agrega ${Formatters.precio(1500000 - _subtotalConDescuento)} más para envío gratis', style: textTheme.bodySmall?.copyWith(color: AppColors.primaryDark, fontWeight: FontWeight.w600))),
                               ],
                             ),
                           ),
@@ -251,7 +387,23 @@ class _CartScreenState extends State<CartScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _priceLine(context, 'Subtotal', Formatters.precio(_subtotal)),
+          // Mostrar subtotal original tachado si hay descuento
+          if (_ahorroTotal > 0)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Subtotal original', style: textTheme.bodyMedium),
+                Text(
+                  Formatters.precio(_subtotalOriginal),
+                  style: textTheme.bodyMedium?.copyWith(
+                    decoration: TextDecoration.lineThrough,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          if (_ahorroTotal > 0) const SizedBox(height: 6),
+          _priceLine(context, 'Subtotal con descuento', Formatters.precio(_subtotalConDescuento), valueColor: AppColors.success),
           const SizedBox(height: 6),
           _priceLine(context, 'Envío', _shipping == 0 ? 'Gratis' : Formatters.precio(_shipping), valueColor: _shipping == 0 ? AppColors.success : null),
           Divider(height: AppDimensions.paddingL, color: colorScheme.outline),
@@ -264,7 +416,12 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: AppDimensions.paddingM),
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pushNamed('/delivery-address', arguments: {'source': 'carrito', 'productos': _items.map((i) => ProductoCheckout(id: i.idproducto, nombre: i.nombre, precio: i.precio, cantidad: i.cantidad)).toList()}),
+            onPressed: () => Navigator.of(context).pushNamed('/delivery-address', arguments: {'source': 'carrito', 'productos': _items.map((i) => ProductoCheckout(
+              id: i.idproducto, 
+              nombre: i.nombre, 
+              precio: _getPrecioConDescuento(i), // Enviar precio con descuento
+              cantidad: i.cantidad
+            )).toList()}),
             child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.payment_rounded, size: 20), SizedBox(width: 8), Text('Finalizar Compra')]),
           ),
         ],
@@ -288,17 +445,32 @@ class _CartScreenState extends State<CartScreen> {
 
 class _CartItemCard extends StatelessWidget {
   final CarritoItem item;
+  final double? descuento;
   final bool processing;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
   final VoidCallback onRemove;
 
-  const _CartItemCard({required this.item, required this.processing, required this.onIncrement, required this.onDecrement, required this.onRemove});
+  const _CartItemCard({
+    required this.item, 
+    required this.descuento,
+    required this.processing, 
+    required this.onIncrement, 
+    required this.onDecrement, 
+    required this.onRemove
+  });
+
+  double get _precioConDescuento => descuento != null && descuento! > 0 
+      ? item.precio * (1 - descuento!) 
+      : item.precio;
+      
+  double get _subtotalConDescuento => _precioConDescuento * item.cantidad;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+    final hayDescuento = descuento != null && descuento! > 0;
     
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingM),
@@ -356,13 +528,73 @@ class _CartItemCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(Formatters.precio(item.precio), style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                    QuantitySelector(quantity: item.cantidad, onIncrement: processing ? () {} : onIncrement, onDecrement: processing ? () {} : onDecrement),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (hayDescuento) ...[
+                          Text(
+                            Formatters.precio(item.precio),
+                            style: textTheme.bodySmall?.copyWith(
+                              decoration: TextDecoration.lineThrough,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          Text(
+                            Formatters.precio(_precioConDescuento),
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.success,
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(top: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '${((descuento ?? 0) * 100).toStringAsFixed(0)}% OFF',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.success,
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          Text(
+                            Formatters.precio(item.precio),
+                            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ],
+                    ),
+                    QuantitySelector(
+                      quantity: item.cantidad, 
+                      onIncrement: processing ? () {} : onIncrement, 
+                      onDecrement: processing ? () {} : onDecrement,
+                    ),
                   ],
                 ),
-                if (item.cantidad > 1) ...[
+                if (item.cantidad > 1 && hayDescuento) ...[
                   const SizedBox(height: 4),
-                  Text('Subtotal: ${Formatters.precio(item.totalCalculado)}', style: textTheme.bodySmall?.copyWith(color: AppColors.primaryDark, fontWeight: FontWeight.w600)),
+                  Text(
+                    'Subtotal: ${Formatters.precio(_subtotalConDescuento)}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.primaryDark,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ] else if (item.cantidad > 1) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Subtotal: ${Formatters.precio(item.totalCalculado)}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppColors.primaryDark,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ],
             ),
