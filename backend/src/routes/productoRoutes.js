@@ -1,6 +1,5 @@
 import express from "express";
 import { supabase } from "../config/db.js";
-import { supabase as supabaseDB } from "../config/supabase.js";
 import { verificarToken } from "../controller/authMiddleware.js";
 import busboy from "busboy";
 
@@ -14,7 +13,7 @@ router.get("/", async (req, res) => {
   try {
     const { search, precioMin, precioMax, idMarca, idCategoria, ordenar } = req.query;
 
-    let query = supabaseDB
+    let query = supabase
       .from("producto")
       .select(`
         idproducto, nombre, precio, stock, descripcion,
@@ -35,7 +34,7 @@ router.get("/", async (req, res) => {
     // Filtro por marca
     if (idMarca) query = query.eq("idmarca", Number(idMarca));
 
-    // Filtro por categoría (además del endpoint /categorias/:id/productos)
+    // Filtro por categoría
     if (idCategoria) query = query.eq("idcategoria", Number(idCategoria));
 
     // Ordenamiento
@@ -63,7 +62,7 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const { data: producto, error } = await supabaseDB
+    const { data: producto, error } = await supabase
       .from("producto")
       .select(`
         idproducto, nombre, precio, stock, descripcion,
@@ -97,7 +96,7 @@ router.get("/:id/imagenes", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const { data: imagenes, error } = await supabaseDB
+    const { data: imagenes, error } = await supabase
       .from("producto_imagen")
       .select("*")
       .eq("idproducto", id);
@@ -116,7 +115,7 @@ router.get("/:id/imagenes", async (req, res) => {
 // ─────────────────────────────────────────
 router.get("/admin/lista", verificarToken, async (req, res) => {
   try {
-    const { data: productos, error } = await supabaseDB
+    const { data: productos, error } = await supabase
       .from("producto")
       .select(`
         idproducto, nombre, precio, stock, descripcion,
@@ -159,7 +158,7 @@ router.post("/con-imagen", (req, res) => {
 
       for (const file of files) {
         if (file.buffer) {
-          const { data: uploadData, error: uploadError } = await supabaseDB
+          const { data: uploadData, error: uploadError } = await supabase
             .storage.from("productos")
             .upload(`productos/${Date.now()}_${file.filename}`, file.buffer, {
               contentType: file.mimeType,
@@ -168,7 +167,7 @@ router.post("/con-imagen", (req, res) => {
 
           if (uploadError) throw uploadError;
 
-          const publicURL = supabaseDB.storage
+          const publicURL = supabase.storage
             .from("productos")
             .getPublicUrl(uploadData.path).data.publicUrl;
 
@@ -176,7 +175,7 @@ router.post("/con-imagen", (req, res) => {
         }
       }
 
-      const { data: productoCreado, error: errorInsert } = await supabaseDB
+      const { data: productoCreado, error: errorInsert } = await supabase
         .from("producto")
         .insert([{
           nombre: campos.nombre,
@@ -197,7 +196,7 @@ router.post("/con-imagen", (req, res) => {
           url,
         }));
 
-        const { data: imagenesCreadas, error: errorImagenes } = await supabaseDB
+        const { data: imagenesCreadas, error: errorImagenes } = await supabase
           .from("producto_imagen")
           .insert(imagenesData)
           .select();
@@ -245,7 +244,7 @@ router.put("/:id/con-imagen", (req, res) => {
 
       for (const file of files) {
         if (file.buffer) {
-          const { data: uploadData, error: uploadError } = await supabaseDB
+          const { data: uploadData, error: uploadError } = await supabase
             .storage.from("productos")
             .upload(`productos/${Date.now()}_${file.filename}`, file.buffer, {
               contentType: file.mimeType,
@@ -254,7 +253,7 @@ router.put("/:id/con-imagen", (req, res) => {
 
           if (uploadError) throw uploadError;
 
-          const publicURL = supabaseDB.storage
+          const publicURL = supabase.storage
             .from("productos")
             .getPublicUrl(uploadData.path).data.publicUrl;
 
@@ -262,7 +261,7 @@ router.put("/:id/con-imagen", (req, res) => {
         }
       }
 
-      const { data: productoActualizado, error: errorUpdate } = await supabaseDB
+      const { data: productoActualizado, error: errorUpdate } = await supabase
         .from("producto")
         .update({
           nombre: campos.nombre,
@@ -279,7 +278,7 @@ router.put("/:id/con-imagen", (req, res) => {
       if (errorUpdate) throw errorUpdate;
 
       if (imageUrls.length > 0) {
-        const { error: deleteError } = await supabaseDB
+        const { error: deleteError } = await supabase
           .from("producto_imagen")
           .delete()
           .eq("idproducto", id);
@@ -288,7 +287,7 @@ router.put("/:id/con-imagen", (req, res) => {
 
         const imagenesData = imageUrls.map((url) => ({ idproducto: id, url }));
 
-        const { data: imagenesCreadas, error: errorImagenes } = await supabaseDB
+        const { data: imagenesCreadas, error: errorImagenes } = await supabase
           .from("producto_imagen")
           .insert(imagenesData)
           .select();
@@ -296,7 +295,7 @@ router.put("/:id/con-imagen", (req, res) => {
         if (errorImagenes) throw errorImagenes;
         productoActualizado.producto_imagen = imagenesCreadas;
       } else {
-        const { data: imagenesExistentes } = await supabaseDB
+        const { data: imagenesExistentes } = await supabase
           .from("producto_imagen")
           .select("*")
           .eq("idproducto", id);
@@ -327,7 +326,7 @@ router.patch("/:id/estado", async (req, res) => {
   const { activo } = req.body;
 
   try {
-    const { data: productoActualizado, error } = await supabaseDB
+    const { data: productoActualizado, error } = await supabase
       .from("producto")
       .update({ activo })
       .eq("idproducto", id)
@@ -353,7 +352,7 @@ router.delete("/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
-    const { data: imagenes } = await supabaseDB
+    const { data: imagenes } = await supabase
       .from("producto_imagen")
       .select("url")
       .eq("idproducto", id);
@@ -364,7 +363,7 @@ router.delete("/:id", async (req, res) => {
         return `productos/${urlParts[urlParts.length - 1]}`;
       });
 
-      const { error: storageError } = await supabaseDB.storage
+      const { error: storageError } = await supabase.storage
         .from("productos")
         .remove(filePaths);
 
@@ -373,14 +372,14 @@ router.delete("/:id", async (req, res) => {
       }
     }
 
-    const { error: deleteImagenesError } = await supabaseDB
+    const { error: deleteImagenesError } = await supabase
       .from("producto_imagen")
       .delete()
       .eq("idproducto", id);
 
     if (deleteImagenesError) throw deleteImagenesError;
 
-    const { error: deleteError } = await supabaseDB
+    const { error: deleteError } = await supabase
       .from("producto")
       .delete()
       .eq("idproducto", id);

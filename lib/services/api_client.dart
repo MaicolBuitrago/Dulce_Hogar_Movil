@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 // ─── Claves de almacenamiento seguro ──────────────────────────────────────
 const _kToken        = 'dulce_hogar_token';
 const _kRefreshToken = 'dulce_hogar_refresh_token';
-const _kExpiresAt    = 'dulce_hogar_expires_at'; // epoch millis en String
+const _kExpiresAt    = 'dulce_hogar_expires_at'; 
 
 class ApiClient {
   ApiClient._();
@@ -16,7 +16,7 @@ class ApiClient {
 
   // ⚠️ Actualiza esta URL cuando cambies el túnel ngrok
   static const String baseUrl =
-      'https://broderick-peristomatic-nonalphabetically.ngrok-free.dev/api';
+      'https://dulce-hogar-backend.vercel.app';
 
   static const Duration _timeout        = Duration(seconds: 15);
   static const _storage = FlutterSecureStorage(

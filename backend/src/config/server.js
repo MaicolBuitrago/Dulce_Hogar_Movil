@@ -21,8 +21,8 @@ app.set("trust proxy", 1);
 // ══════════════════════════════════════════════════
 app.use(
   helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }, // necesario para ngrok
-    contentSecurityPolicy: false, // Flutter no necesita CSP estricto
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false,
   })
 );
 
@@ -34,13 +34,13 @@ const ALLOWED_ORIGINS = [
   "http://localhost:49763",
   "http://localhost:5173",
   "https://dulce-hogar.vercel.app",
+  "https://dulce-hogar-backend.vercel.app",
   "https://dulce-hogar-f8krtsn9m-maicols-projects-da38a8a3.vercel.app",
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Peticiones sin origin (móvil Flutter, curl, Postman en dev)
       if (!origin) return callback(null, true);
 
       if (
@@ -68,8 +68,7 @@ app.use(
 app.options("*", (req, res) => res.sendStatus(204));
 
 // ══════════════════════════════════════════════════
-// 3. RATE LIMIT GLOBAL — anti fuerza bruta genérica
-//    100 peticiones / 15 min por IP
+// 3. RATE LIMIT GLOBAL
 // ══════════════════════════════════════════════════
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -81,7 +80,6 @@ const globalLimiter = rateLimit({
 
 // ══════════════════════════════════════════════════
 // 4. RATE LIMIT ESTRICTO — /api/login y /api/auth/*
-//    10 intentos / 15 min por IP
 // ══════════════════════════════════════════════════
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -93,11 +91,12 @@ const authLimiter = rateLimit({
       "Demasiados intentos de inicio de sesión. Espera 15 minutos antes de volver a intentarlo.",
   },
 });
+
 // ══════════════════════════════════════════════════
 // 5. PARSERS
 // ══════════════════════════════════════════════════
 app.use(cookieParser());
-app.use(express.json({ limit: "2mb" })); // límite para evitar body bombing
+app.use(express.json({ limit: "2mb" }));
 
 // ══════════════════════════════════════════════════
 // 6. Inyectar cliente supabase en req
@@ -113,9 +112,6 @@ app.use((req, res, next) => {
 app.use("/api/auth", authLimiter, express.json(), authRoutes);
 app.use("/api/mercadopago", express.json(), mercadopagoRoutes);
 app.use("/api", router);
-
-// Login también aplica rate limit estricto
-// (el router principal lo delega a usuarioRoutes POST /login)
 app.use("/api/login", authLimiter);
 
 // ══════════════════════════════════════════════════
@@ -123,11 +119,17 @@ app.use("/api/login", authLimiter);
 // ══════════════════════════════════════════════════
 app.use((err, req, res, next) => {
   console.error("❌ Error no controlado:", err.message);
-  // No exponer stack en producción
   res.status(err.status || 500).json({ message: "Error interno del servidor." });
 });
 
+
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Servidor corriendo en http://0.0.0.0:${PORT}`);
-});
+
+// Solo escucha si NO está en Vercel
+if (!process.env.VERCEL) {
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`✅ Servidor corriendo en http://0.0.0.0:${PORT}`);
+  });
+}
+
+export default app;

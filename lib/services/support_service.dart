@@ -120,14 +120,14 @@ class SupportService {
       'descripcion': descripcion,
       if (idproducto != null) 'idproducto': idproducto,
     };
-    final res = await ApiClient.post('/soporte', body);
+    final res = await ApiClient.post('/api/soporte', body);
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al abrir ticket');
     return ServiceResult.ok(null);
   }
 
   // Mis tickets (cliente)
   static Future<ServiceResult<List<TicketResumen>>> getMisTickets() async {
-    final res = await ApiClient.get('/soporte/mis-tickets');
+    final res = await ApiClient.get('/api/soporte/mis-tickets');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al cargar tickets');
     final lista = (res.data as List).map((j) => TicketResumen.fromJson(j)).toList();
     return ServiceResult.ok(lista);
@@ -135,7 +135,7 @@ class SupportService {
 
   // Todos los tickets (admin)
   static Future<ServiceResult<List<TicketResumen>>> getTodosTickets() async {
-    final res = await ApiClient.get('/soporte/admin/todos');
+    final res = await ApiClient.get('/api/soporte/admin/todos');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al cargar tickets');
     final lista = (res.data as List).map((j) => TicketResumen.fromJson(j)).toList();
     return ServiceResult.ok(lista);
@@ -143,7 +143,7 @@ class SupportService {
 
   // Hilo completo de un ticket
   static Future<ServiceResult<TicketDetalle>> getTicket(int id) async {
-    final res = await ApiClient.get('/soporte/$id');
+    final res = await ApiClient.get('/api/soporte/$id');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al cargar ticket');
     return ServiceResult.ok(TicketDetalle.fromJson(res.data));
   }
@@ -153,7 +153,7 @@ class SupportService {
     required int    idreclamo,
     required String mensaje,
   }) async {
-    final res = await ApiClient.post('/soporte/$idreclamo/mensajes', {'mensaje': mensaje});
+    final res = await ApiClient.post('/api/soporte/$idreclamo/mensajes', {'mensaje': mensaje});
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al enviar mensaje');
     return ServiceResult.ok(MensajeSoporte.fromJson(res.data['mensaje']));
   }
@@ -165,7 +165,7 @@ class SupportService {
     required String nuevoTexto,
   }) async {
     final res = await ApiClient.put(
-        '/soporte/$idreclamo/mensajes/$idmensaje', {'mensaje': nuevoTexto});
+        '/api/soporte/$idreclamo/mensajes/$idmensaje', {'mensaje': nuevoTexto});
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al editar mensaje');
     return ServiceResult.ok(null);
   }
@@ -175,14 +175,14 @@ class SupportService {
     required int idreclamo,
     required int idmensaje,
   }) async {
-    final res = await ApiClient.delete('/soporte/$idreclamo/mensajes/$idmensaje');
+    final res = await ApiClient.delete('/api/soporte/$idreclamo/mensajes/$idmensaje');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al eliminar mensaje');
     return ServiceResult.ok(null);
   }
 
   // Cerrar ticket (admin)
   static Future<ServiceResult<void>> cerrarTicket(int idreclamo) async {
-    final res = await ApiClient.patch('/soporte/$idreclamo/cerrar', {});
+    final res = await ApiClient.patch('/api/soporte/$idreclamo/cerrar', {});
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al cerrar ticket');
     return ServiceResult.ok(null);
   }

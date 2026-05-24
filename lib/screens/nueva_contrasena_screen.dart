@@ -95,7 +95,7 @@ class _NuevaContrasenaScreenState extends State<NuevaContrasenaScreen> {
 
     setState(() => _loading = true);
 
-    final res = await ApiClient.post('/auth/restablecer', {
+    final res = await ApiClient.post('/api/auth/restablecer', {
       'token': widget.token,
       'nuevaContrasena': nueva,
     });
