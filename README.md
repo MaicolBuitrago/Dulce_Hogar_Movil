@@ -416,6 +416,7 @@ Brevo gestiona el envío de correos de recuperación de contraseña y confirmaci
 
 ---
 
+
 ### Solución de problemas frecuentes
 
 | Problema | Causa probable | Solución |
