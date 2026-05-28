@@ -8,7 +8,7 @@ class OrderService {
   // ── GET /api/pedidos/mis-pedidos ─────────────────────────────
   // Devuelve la lista de pedidos del usuario autenticado
   static Future<ServiceResult<List<PedidoResumen>>> getMisPedidos() async {
-    final res = await ApiClient.get('/pedidos/mis-pedidos');
+    final res = await ApiClient.get('/api/pedidos/mis-pedidos');
 
     if (!res.ok) {
       return ServiceResult.error(res.error ?? 'Error al obtener tus pedidos');
@@ -24,7 +24,7 @@ class OrderService {
   // ── GET /api/pedidos/mis-pedidos/:id ─────────────────────────
   // Devuelve el detalle completo de un pedido con sus productos
   static Future<ServiceResult<PedidoDetalle>> getDetallePedido(int idpedido) async {
-    final res = await ApiClient.get('/pedidos/mis-pedidos/$idpedido');
+    final res = await ApiClient.get('/api/pedidos/mis-pedidos/$idpedido');
 
     if (!res.ok) {
       return ServiceResult.error(res.error ?? 'Error al obtener el pedido');

@@ -109,7 +109,7 @@ class ProductService {
       params.add('ordenar=${f.orden.queryParam}');
     }
 
-    final path = params.isEmpty ? '/productos' : '/productos?${params.join('&')}';
+    final path = params.isEmpty ? '/api/productos' : '/api/productos?${params.join('&')}';
     print('📡 URL productos: $path');
     
     final res = await ApiClient.get(path);
@@ -121,7 +121,7 @@ class ProductService {
 
   // ── GET /api/productos/:id ───────────────────────────────────
   static Future<ServiceResult<Producto>> getProductoById(int id) async {
-    final res = await ApiClient.get('/productos/$id');
+    final res = await ApiClient.get('/api/productos/$id');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Producto no encontrado');
     return ServiceResult.ok(Producto.fromJson(res.data));
   }
@@ -129,7 +129,7 @@ class ProductService {
   // ── GET /api/categorias ──────────────────────────────────────
   static Future<ServiceResult<List<Categoria>>> getCategorias() async {
     print('🔵 [SERVICE] getCategorias() - INICIO');
-    final res = await ApiClient.get('/categorias');
+    final res = await ApiClient.get('/api/categorias');
     print('🔵 [SERVICE] getCategorias() - statusCode: ${res.statusCode}, ok: ${res.ok}');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al obtener categorías');
     final list = (res.data as List).map((j) => Categoria.fromJson(j)).toList();
@@ -139,7 +139,7 @@ class ProductService {
 
   // ── GET /api/categorias/:id/productos ────────────────────────
   static Future<ServiceResult<List<Producto>>> getProductosByCategoria(int idCategoria) async {
-    final res = await ApiClient.get('/categorias/$idCategoria/productos');
+    final res = await ApiClient.get('/api/categorias/$idCategoria/productos');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al obtener productos');
     final list = (res.data as List).map((j) => Producto.fromJson(j)).toList();
     return ServiceResult.ok(list);
@@ -150,7 +150,7 @@ class ProductService {
     print('🔵 [SERVICE] getMarcas() - INICIO');
     print('🔵 [SERVICE] getMarcas() - URL: /marcas');
     
-    final res = await ApiClient.get('/marcas');
+    final res = await ApiClient.get('/api/marcas');
     
     print('🔵 [SERVICE] getMarcas() - statusCode: ${res.statusCode}');
     print('🔵 [SERVICE] getMarcas() - ok: ${res.ok}');

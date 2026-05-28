@@ -11,7 +11,7 @@ class FavoritesService {
 
   // ── GET /api/favoritos ───────────────────────────────────────
   static Future<ServiceResult<List<Favorito>>> getFavoritos() async {
-    final res = await ApiClient.get('/favoritos');
+    final res = await ApiClient.get('/api/favoritos');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al obtener favoritos');
     final list = (res.data as List).map((j) => Favorito.fromJson(j)).toList();
     // Sincronizar el set de ids
@@ -21,7 +21,7 @@ class FavoritesService {
 
   // ── POST /api/favoritos ──────────────────────────────────────
   static Future<ServiceResult<void>> agregar(int idproducto) async {
-    final res = await ApiClient.post('/favoritos', {'idproducto': idproducto});
+    final res = await ApiClient.post('/api/favoritos', {'idproducto': idproducto});
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al agregar favorito');
     favoriteIds.value = {...favoriteIds.value, idproducto};
     return ServiceResult.ok(null);
@@ -29,7 +29,7 @@ class FavoritesService {
 
   // ── DELETE /api/favoritos/:id ────────────────────────────────
   static Future<ServiceResult<void>> eliminar(int idproducto) async {
-    final res = await ApiClient.delete('/favoritos/$idproducto');
+    final res = await ApiClient.delete('/api/favoritos/$idproducto');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al eliminar favorito');
     favoriteIds.value = favoriteIds.value.where((id) => id != idproducto).toSet();
     return ServiceResult.ok(null);

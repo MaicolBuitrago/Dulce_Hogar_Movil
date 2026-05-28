@@ -1,4 +1,5 @@
 import '../models/models.dart';
+import '../config/api_config.dart';  // ← AGREGAR ESTA IMPORTACIÓN
 import 'api_client.dart';
 import 'service_result.dart';
 
@@ -10,16 +11,14 @@ class AuthService {
     required String email,
     required String contrasena,
   }) async {
-    final res = await ApiClient.post('/login', {
+    // ✅ USAR ApiConfig.login
+    final res = await ApiClient.post(ApiConfig.login, {
       'email':     email,
       'contrasena': contrasena,
     });
 
     if (!res.ok) return ServiceResult.error(res.error ?? 'Credenciales incorrectas');
 
-    // ApiClient.post() ya guardó los tokens automáticamente al detectar
-    // que la respuesta contenía el campo "token". Solo necesitamos
-    // extraer el usuario.
     final usuarioJson = res.data['usuario'] as Map<String, dynamic>?;
     if (usuarioJson == null) {
       return ServiceResult.error('Respuesta inválida del servidor');
@@ -38,7 +37,8 @@ class AuthService {
     String? direccion,
     String? ciudad,
   }) async {
-    final res = await ApiClient.post('/usuario', {
+    // ✅ USAR ApiConfig.registro
+    final res = await ApiClient.post(ApiConfig.registro, {
       'cedula':    cedula,
       'nombre':    nombre,
       'apellido':  apellido,
@@ -54,9 +54,9 @@ class AuthService {
 
   // ── Logout ────────────────────────────────────────────────────────────────
   static Future<ServiceResult<void>> logout() async {
-    // Intentar avisar al servidor (puede fallar si no hay red — no importa)
     try {
-      await ApiClient.post('/logout', {});
+      // ✅ USAR ApiConfig.logout
+      await ApiClient.post(ApiConfig.logout, {});
     } catch (_) {}
     await ApiClient.limpiarSesion();
     return ServiceResult.ok(null);
@@ -64,7 +64,8 @@ class AuthService {
 
   // ── Perfil ────────────────────────────────────────────────────────────────
   static Future<ServiceResult<Usuario>> getPerfil() async {
-    final res = await ApiClient.get('/usuario/perfil');
+    // ✅ USAR ApiConfig.perfil
+    final res = await ApiClient.get(ApiConfig.perfil);
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al obtener perfil');
     return ServiceResult.ok(Usuario.fromJson(res.data));
   }
@@ -76,7 +77,8 @@ class AuthService {
     String? ciudad,
     String? telefono,
   }) async {
-    final res = await ApiClient.put('/usuario/perfil', {
+    // ✅ USAR ApiConfig.perfil
+    final res = await ApiClient.put(ApiConfig.perfil, {
       'nombre':   nombre,
       'apellido': apellido,
       if (direccion != null) 'direccion': direccion,
@@ -89,14 +91,13 @@ class AuthService {
 
   // ── Recuperar contraseña ──────────────────────────────────────────────────
   static Future<ServiceResult<void>> recuperarContrasena(String email) async {
-    final res = await ApiClient.post('/auth/recuperar', {'email': email});
+    // ✅ USAR ApiConfig.recuperar
+    final res = await ApiClient.post(ApiConfig.recuperar, {'email': email});
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al enviar correo');
     return ServiceResult.ok(null);
   }
 
   // ── Verificar sesión al arrancar ──────────────────────────────────────────
-  /// Devuelve true si hay sesión válida (o renovada con refresh token).
-  /// Llamar desde main() antes de runApp().
   static Future<bool> checkSesionActiva() async {
     return ApiClient.initSession();
   }

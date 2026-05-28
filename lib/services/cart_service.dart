@@ -11,7 +11,7 @@ class CartService {
 
   // ── GET /api/carrito ─────────────────────────────────────────
   static Future<ServiceResult<List<CarritoItem>>> getCarrito() async {
-    final res = await ApiClient.get('/carrito');
+    final res = await ApiClient.get('/api/carrito');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al obtener carrito');
     final list = (res.data as List).map((j) => CarritoItem.fromJson(j)).toList();
     // Sincronizar el conteo con lo que devuelve el servidor
@@ -24,7 +24,7 @@ class CartService {
     required int idproducto,
     required int cantidad,
   }) async {
-    final res = await ApiClient.post('/carrito/agregar', {
+    final res = await ApiClient.post('/api/carrito/agregar', {
       'idproducto': idproducto,
       'cantidad': cantidad,
     });
@@ -39,7 +39,7 @@ class CartService {
     required int idproducto,
     required int cantidad,
   }) async {
-    final res = await ApiClient.put('/carrito/actualizar', {
+    final res = await ApiClient.put('/api/carrito/actualizar', {
       'idproducto': idproducto,
       'cantidad': cantidad,
     });
@@ -54,7 +54,7 @@ class CartService {
 
   // ── DELETE /api/carrito/eliminar/:id ────────────────────────
   static Future<ServiceResult<void>> eliminar(int idproducto) async {
-    final res = await ApiClient.delete('/carrito/eliminar/$idproducto');
+    final res = await ApiClient.delete('/api/carrito/eliminar/$idproducto');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al eliminar del carrito');
     if (cartCount.value > 0) cartCount.value -= 1;
     return ServiceResult.ok(null);
@@ -62,7 +62,7 @@ class CartService {
 
   // ── DELETE /api/carrito/vaciar ───────────────────────────────
   static Future<ServiceResult<void>> vaciar() async {
-    final res = await ApiClient.delete('/carrito/vaciar');
+    final res = await ApiClient.delete('/api/carrito/vaciar');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al vaciar carrito');
     cartCount.value = 0;
     return ServiceResult.ok(null);

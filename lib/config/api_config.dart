@@ -3,38 +3,56 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String baseUrl = 'https://broderick-peristomatic-nonalphabetically.ngrok-free.dev/api';
-
   // ── Auth
-  static const String login            = '$baseUrl/login';
-  static const String registro         = '$baseUrl/usuario';
-  static const String perfil           = '$baseUrl/usuario/perfil';
-  static const String recuperar        = '$baseUrl/auth/recuperar';
-  static const String restablecer      = '$baseUrl/auth/restablecer';
+  static const String login       = '/api/usuario/login';
+  static const String registro    = '/api/usuario';
+  static const String perfil      = '/api/usuario/perfil';
+  static const String refresh     = '/api/refresh';
+  static const String logout      = '/api/logout';
+
+  // ── Recuperar contraseña
+  static const String recuperar   = '/api/auth/recuperar';
+  static const String restablecer = '/api/auth/restablecer';
 
   // ── Productos
-  static const String productos        = '$baseUrl/productos';
-  static String productoDetalle(int id) => '$baseUrl/productos/$id';
+  static const String productos   = '/api/productos';
+  static String productoDetalle(int id)       => '/api/productos/$id';
 
   // ── Categorías
-  static const String categorias       = '$baseUrl/categorias';
-  static String productosPorCategoria(int id) => '$baseUrl/categorias/$id/productos';
+  static const String categorias  = '/api/categorias';
+  static String productosPorCategoria(int id) => '/api/categorias/$id/productos';
 
-  // ── Marcas (NUEVO)
-  static const String marcas           = '$baseUrl/marcas'; 
+  // ── Marcas
+  static const String marcas      = '/api/marcas';
 
   // ── Carrito
-  static const String carrito          = '$baseUrl/carrito';
-  static const String carritoAgregar   = '$baseUrl/carrito/agregar';
-  static const String carritoActualizar= '$baseUrl/carrito/actualizar';
-  static const String carritoVaciar    = '$baseUrl/carrito/vaciar';
-  static String carritoEliminar(int id) => '$baseUrl/carrito/eliminar/$id';
+  static const String carrito           = '/api/carrito';
+  static const String carritoAgregar    = '/api/carrito/agregar';
+  static const String carritoActualizar = '/api/carrito/actualizar';
+  static const String carritoVaciar     = '/api/carrito/vaciar';
+  static String carritoEliminar(int id) => '/api/carrito/eliminar/$id';
 
   // ── Favoritos
-  static const String favoritos        = '$baseUrl/favoritos';
-  static String favoritoEliminar(int id) => '$baseUrl/favoritos/$id';
+  static const String favoritos         = '/api/favoritos';
+  static String favoritoEliminar(int id) => '/api/favoritos/$id';
+
+  // ── Promociones
+  static const String promociones       = '/api/promociones';
+
+  // ── Soporte
+  static const String soporte           = '/api/soporte';
+
+  // ── Pedidos
+  static const String pedidos           = '/api/pedidos';
+  static const String misPedidos        = '/api/mis-pedidos';
+
+  // ── Reseñas
+  static const String resenas           = '/api/resenas';
+
+  // ── Direcciones
+  static const String direcciones       = '/api/direcciones';
 
   // ── MercadoPago
-  static const String mpPreferencia    = '$baseUrl/mercadopago/create-preference';
-  static const String mpPedido         = '$baseUrl/mercadopago/pedido/confirmar';
+  static const String mpPreferencia     = '/api/mercadopago/create-preference';
+  static const String mpPedido          = '/api/mercadopago/pedido/confirmar';
 }

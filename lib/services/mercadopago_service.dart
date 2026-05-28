@@ -12,7 +12,7 @@ class MercadoPagoService {
     required String source, // 'carrito' | 'producto'
     int? iddireccion,
   }) async {
-    final res = await ApiClient.post('/mercadopago/create-preference', {
+    final res = await ApiClient.post('/api/mercadopago/create-preference', {
       'productos': productos.map((p) => p.toJson()).toList(),
       'source': source,
       if (iddireccion != null) 'iddireccion': iddireccion,
@@ -32,7 +32,7 @@ class MercadoPagoService {
   /// que MercadoPago devuelve como query param en la URL de retorno:
   ///   ?payment_id=xxx&status=approved&payment_type=credit_card
   static Future<ServiceResult<Pedido>> confirmarPedido(String paymentId) async {
-    final res = await ApiClient.post('/mercadopago/pedido/confirmar', {
+    final res = await ApiClient.post('/api/mercadopago/pedido/confirmar', {
       'payment_id': paymentId,
     });
 

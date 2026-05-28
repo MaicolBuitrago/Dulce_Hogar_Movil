@@ -49,7 +49,7 @@ class PromocionService {
 
   // ✅ CORREGIDO: URL correcta es '/promociones', no '/promociones/promociones'
   static Future<ServiceResult<List<Promocion>>> getPromociones() async {
-    final res = await ApiClient.get('/promociones');
+    final res = await ApiClient.get('/api/promociones');
     if (!res.ok) {
       return ServiceResult.error(res.error ?? 'Error al cargar promociones');
     }
@@ -59,7 +59,7 @@ class PromocionService {
 
   // GET /api/promociones/producto/:id
   static Future<ServiceResult<Promocion?>> getPromocionPorProducto(int idproducto) async {
-    final res = await ApiClient.get('/promociones/producto/$idproducto');
+    final res = await ApiClient.get('/api/promociones/producto/$idproducto');
     if (!res.ok) {
       return ServiceResult.error(res.error ?? 'Error al obtener promoción');
     }
@@ -71,7 +71,7 @@ class PromocionService {
 
   // GET /api/promociones/categoria/:id
   static Future<ServiceResult<Promocion?>> getPromocionPorCategoria(int idcategoria) async {
-    final res = await ApiClient.get('/promociones/categoria/$idcategoria');
+    final res = await ApiClient.get('/api/promociones/categoria/$idcategoria');
     if (!res.ok) {
       return ServiceResult.error(res.error ?? 'Error al obtener promoción');
     }
@@ -83,7 +83,7 @@ class PromocionService {
 
   // GET /api/promociones/globales
   static Future<ServiceResult<List<Promocion>>> getPromocionesGlobales() async {
-    final res = await ApiClient.get('/promociones/globales');
+    final res = await ApiClient.get('/api/promociones/globales');
     if (!res.ok) {
       return ServiceResult.error(res.error ?? 'Error al cargar promociones globales');
     }

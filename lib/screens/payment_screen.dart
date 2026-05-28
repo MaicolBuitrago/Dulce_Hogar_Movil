@@ -3,7 +3,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../services/mercadopago_service.dart';
-import '../services/promocion_service.dart';
 import '../utils/formatters.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -19,17 +18,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   List<ProductoCheckout> _productos   = [];
   String                 _source      = 'carrito';
   int?                   _iddireccion;
-  
-  Map<int, double> _descuentosPorProducto = {};
 
-  double get _totalOriginal => _productos.fold(0, (s, p) => s + p.precio * p.cantidad);
-  double get _totalConDescuento => _productos.fold(0, (s, p) {
-    final descuento = _descuentosPorProducto[p.id] ?? 0;
-    final precioConDescuento = p.precio * (1 - descuento);
-    return s + precioConDescuento * p.cantidad;
-  });
-  double get _ahorroTotal => _totalOriginal - _totalConDescuento;
-  bool get _tieneDescuento => _ahorroTotal > 0;
+  // Los precios ya llegan con descuento aplicado desde la pantalla anterior
+  double get _total => _productos.fold(0, (s, p) => s + p.precio * p.cantidad);
 
   final List<_PaymentMethod> _methods = [
     _PaymentMethod(id: 0, title: 'Pagar con MercadoPago', icon: Icons.credit_card_rounded, color: const Color(0xFF009EE3), available: true),
@@ -42,63 +33,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     if (args != null) {
-      _productos   = (args['productos'] as List<ProductoCheckout>?) ?? [];
-      _source      = args['source'] as String? ?? 'carrito';
-      _iddireccion = args['iddireccion'] as int?;
-      _cargarPromociones();
-    }
-  }
-
-  // Cargar promociones y aplicarlas a los productos
-  Future<void> _cargarPromociones() async {
-    final result = await PromocionService.getPromociones();
-    if (!mounted) return;
-    
-    if (result.ok && result.data != null) {
-      final Map<int, double> descuentos = {};
-      
-      for (final promo in result.data!) {
-        if (promo.scope == 'producto' && promo.idproducto != null) {
-          descuentos[promo.idproducto!] = promo.porcentaje;
-        } else if (promo.scope == 'global') {
-          for (final producto in _productos) {
-            if (!descuentos.containsKey(producto.id) || 
-                (descuentos[producto.id] ?? 0) < promo.porcentaje) {
-              descuentos[producto.id] = promo.porcentaje;
-            }
-          }
-        }
-      }
-      
       setState(() {
-        _descuentosPorProducto = descuentos;
+        _productos   = (args['productos'] as List<ProductoCheckout>?) ?? [];
+        _source      = args['source'] as String? ?? 'carrito';
+        _iddireccion = args['iddireccion'] as int?;
       });
     }
-  }
-
-  // Obtener precio con descuento para un producto
-  double _getPrecioConDescuento(ProductoCheckout producto) {
-    final descuento = _descuentosPorProducto[producto.id] ?? 0;
-    if (descuento > 0) {
-      return producto.precio * (1 - descuento);
-    }
-    return producto.precio;
   }
 
   Future<void> _pagar() async {
     if (_selectedMethod != 0) return;
     setState(() => _loading = true);
 
-    // Crear lista de productos con precios actualizados (con descuento)
-    final productosConDescuento = _productos.map((p) => ProductoCheckout(
-      id: p.id,
-      nombre: p.nombre,
-      precio: _getPrecioConDescuento(p),
-      cantidad: p.cantidad,
-    )).toList();
-
+    // Los productos ya vienen con precio descontado — no recalcular
     final r = await MercadoPagoService.crearPreferencia(
-      productos:   productosConDescuento,
+      productos:   _productos,
       source:      _source,
       iddireccion: _iddireccion,
     );
@@ -153,8 +102,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     const SizedBox(height: AppDimensions.paddingM),
                     Text('Método de pago', style: textTheme.displayMedium),
                     const SizedBox(height: 6),
-                    Text('Selecciona cómo quieres pagar tu pedido', 
-                      style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant), 
+                    Text('Selecciona cómo quieres pagar tu pedido',
+                      style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
                       textAlign: TextAlign.center),
 
                     const SizedBox(height: AppDimensions.paddingL),
@@ -170,12 +119,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           margin: const EdgeInsets.only(bottom: AppDimensions.paddingS),
                           padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingM),
                           decoration: BoxDecoration(
-                            color: m.available 
-                                ? (isSelected ? AppColors.primary.withOpacity(0.05) : colorScheme.surface) 
+                            color: m.available
+                                ? (isSelected ? AppColors.primary.withOpacity(0.05) : colorScheme.surface)
                                 : colorScheme.surfaceVariant,
                             borderRadius: BorderRadius.circular(AppDimensions.radiusM),
                             border: Border.all(
-                              color: isSelected ? AppColors.primary : colorScheme.outline, 
+                              color: isSelected ? AppColors.primary : colorScheme.outline,
                               width: isSelected ? 2 : 1
                             ),
                           ),
@@ -184,7 +133,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               Container(
                                 width: 42, height: 42,
                                 decoration: BoxDecoration(
-                                  color: m.available ? m.color.withOpacity(0.12) : colorScheme.outline.withOpacity(0.5), 
+                                  color: m.available ? m.color.withOpacity(0.12) : colorScheme.outline.withOpacity(0.5),
                                   borderRadius: BorderRadius.circular(AppDimensions.radiusS)
                                 ),
                                 child: Icon(m.icon, color: m.available ? m.color : colorScheme.onSurfaceVariant, size: 22),
@@ -194,21 +143,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(m.title, 
+                                    Text(m.title,
                                       style: textTheme.titleMedium?.copyWith(
                                         color: m.available ? colorScheme.onSurface : colorScheme.onSurfaceVariant
                                       )
                                     ),
-                                    if (m.subtitle != null) 
-                                      Text(m.subtitle!, 
+                                    if (m.subtitle != null)
+                                      Text(m.subtitle!,
                                         style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)
                                       ),
                                   ],
                                 ),
                               ),
                               Icon(
-                                m.available ? Icons.arrow_forward_rounded : Icons.lock_outline_rounded, 
-                                color: m.available ? AppColors.primary : colorScheme.onSurfaceVariant, 
+                                m.available ? Icons.arrow_forward_rounded : Icons.lock_outline_rounded,
+                                color: m.available ? AppColors.primary : colorScheme.onSurfaceVariant,
                                 size: 20
                               ),
                             ],
@@ -224,7 +173,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       children: [
                         Icon(Icons.lock_rounded, color: colorScheme.onSurfaceVariant, size: 14),
                         const SizedBox(width: 4),
-                        Text('Pago 100% seguro y encriptado', 
+                        Text('Pago 100% seguro y encriptado',
                           style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)
                         ),
                       ],
@@ -254,7 +203,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget _buildHeader(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Container(
       color: colorScheme.surface,
       padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingM, vertical: AppDimensions.paddingS),
@@ -263,11 +212,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
           GestureDetector(
             onTap: () => Navigator.of(context).maybePop(),
             child: Container(
-              width: 40, height: 40, 
+              width: 40, height: 40,
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant, 
+                color: colorScheme.surfaceVariant,
                 borderRadius: BorderRadius.circular(AppDimensions.radiusM)
-              ), 
+              ),
               child: Icon(Icons.arrow_back_rounded, color: colorScheme.onSurface, size: 20)
             ),
           ),
@@ -281,13 +230,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget _buildOrderSummary(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppDimensions.paddingM),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant, 
-        borderRadius: BorderRadius.circular(AppDimensions.radiusM), 
+        color: colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusM),
         border: Border.all(color: colorScheme.outline)
       ),
       child: Column(
@@ -295,78 +244,40 @@ class _PaymentScreenState extends State<PaymentScreen> {
         children: [
           Text('Resumen del pedido', style: textTheme.headlineMedium),
           const SizedBox(height: AppDimensions.paddingS),
-          
-          // Lista de productos - SOLO EL PRECIO CON DESCUENTO
-          ..._productos.map((p) {
-            final descuento = _descuentosPorProducto[p.id] ?? 0;
-            final precioConDescuento = _getPrecioConDescuento(p);
-            
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${p.nombre} (x${p.cantidad})', 
-                      style: textTheme.bodySmall, 
-                      overflow: TextOverflow.ellipsis
-                    ),
+
+          // Lista de productos — precio ya viene con descuento aplicado
+          ..._productos.map((p) => Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    '${p.nombre} (x${p.cantidad})',
+                    style: textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis
                   ),
-                  Text(
-                    Formatters.precio(precioConDescuento * p.cantidad),
-                    style: textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: descuento > 0 ? AppColors.success : null,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-          
+                ),
+                Text(
+                  Formatters.precio(p.precio * p.cantidad),
+                  style: textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          )),
+
           Divider(height: AppDimensions.paddingM, color: colorScheme.outline),
-          
-          // Total a pagar
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Total a pagar:', style: textTheme.titleMedium),
               Text(
-                Formatters.precio(_totalConDescuento), 
-                style: textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: _tieneDescuento ? AppColors.success : null,
-                ),
+                Formatters.precio(_total),
+                style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
             ],
           ),
-          
-          // Badge de ahorro (opcional)
-          if (_tieneDescuento) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-              decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.local_offer_rounded, size: 14, color: AppColors.success),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Estás ahorrando ${Formatters.precio(_ahorroTotal)}',
-                    style: textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.success,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );

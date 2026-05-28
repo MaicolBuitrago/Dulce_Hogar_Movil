@@ -58,7 +58,7 @@ class ReviewService {
 
   // GET /api/resenas/:idproducto
   static Future<ServiceResult<ResumenResenas>> getResenas(int idproducto) async {
-    final res = await ApiClient.get('/resenas/$idproducto');
+    final res = await ApiClient.get('/api/resenas/$idproducto');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al cargar reseñas');
     return ServiceResult.ok(ResumenResenas.fromJson(res.data));
   }
@@ -69,7 +69,7 @@ class ReviewService {
     required int    calificacion,
     required String comentario,
   }) async {
-    final res = await ApiClient.post('/resenas/$idproducto', {
+    final res = await ApiClient.post('/api/resenas/$idproducto', {
       'calificacion': calificacion,
       'comentario':   comentario,
     });
@@ -79,7 +79,7 @@ class ReviewService {
 
   // DELETE /api/resenas/:idresena
   static Future<ServiceResult<void>> eliminar(int idresena) async {
-    final res = await ApiClient.delete('/resenas/$idresena');
+    final res = await ApiClient.delete('/api/resenas/$idresena');
     if (!res.ok) return ServiceResult.error(res.error ?? 'Error al eliminar reseña');
     return ServiceResult.ok(null);
   }
