@@ -1,6 +1,7 @@
 <p align="center">
   <img src="./assets/images/logo_dulce_hogar.png" alt="Dulce Hogar Logo" width="220"/>
 </p>
+
 # Dulce Hogar - Aplicación Móvil
 
 ## Descripción del proyecto
