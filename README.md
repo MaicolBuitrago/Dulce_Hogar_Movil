@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="./assets/images/logo_dulce_hogar.png" alt="Dulce Hogar Logo" width="220"/>
+</p>
 # Dulce Hogar - Aplicación Móvil
 
 ## Descripción del proyecto
@@ -6,6 +9,13 @@ Dulce Hogar es una aplicación móvil orientada a la venta de electrodomésticos
 
 Este proyecto hace parte del sistema Dulce Hogar, el cual está compuesto por una aplicación móvil para clientes, un panel administrativo web y un backend encargado de gestionar la información, autenticación, productos, pedidos y demás procesos del sistema.
 
+## Integrantes del proyecto
+
+- Victor Manuel Tabares Toro
+- Jean Michael Buitrago Henao
+- Luis Mateo Muñoz Jaramillo
+- Diego Alejandro Espinosa
+  
 ## Objetivo de la aplicación
 
 Brindar a los usuarios una plataforma móvil sencilla, intuitiva y funcional para consultar y comprar electrodomésticos, facilitando el acceso a productos del hogar desde dispositivos móviles.
